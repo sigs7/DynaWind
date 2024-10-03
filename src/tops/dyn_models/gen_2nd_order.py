@@ -2,7 +2,7 @@ import numpy as np
 from tops.dyn_models.utils import DAEModel
 import tops.utility_functions as dps_uf
 
-class GEN(DAEModel):
+class GEN_2nd_order(DAEModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -11,7 +11,7 @@ class GEN(DAEModel):
                 new_field = np.ones(len(self.par), dtype=[(req_attr, float)])
                 new_field[req_attr] *= default
                 self.par = dps_uf.combine_recarrays(self.par, new_field)
- 
+
         fix_idx = self.par['V_n'] == 0
         gen_bus_idx = dps_uf.lookup_strings(self.par['bus'], self.sys_par['bus_names'])
         self.par['V_n'][fix_idx] = self.sys_par['bus_v_n'][gen_bus_idx][fix_idx]
@@ -136,10 +136,10 @@ class GEN(DAEModel):
 
         dX['speed'][:] = 1 / (2 * H) * (T_m - P_e/PF_n - p['D'] * X['speed'])
         dX['angle'][:] = X['speed'] * 2 * np.pi * self.sys_par['f_n']
-        dX['e_q_t'][:] = 1 / (p['T_d0_t']) * (self.E_f(x, v) + self.v_aux(x, v) - X['e_q_t'] - self.i_d(x, v) * (p['X_d'] - p['X_d_t']))
-        dX['e_d_t'][:] = 1 / (p['T_q0_t']) * (-X['e_d_t'] + self.i_q(x, v) * (p['X_q'] - p['X_q_t']))
-        dX['e_q_st'][:] = 1 / (p['T_d0_st']) * (X['e_q_t'] - X['e_q_st'] - self.i_d(x, v) * (p['X_d_t'] - p['X_d_st']))
-        dX['e_d_st'][:] = 1 / (p['T_q0_st']) * (X['e_d_t'] - X['e_d_st'] + self.i_q(x, v) * (p['X_q_t'] - p['X_q_st']))
+        # dX['e_q_t'][:] = 1 / (p['T_d0_t']) * (self.E_f(x, v) + self.v_aux(x, v) - X['e_q_t'] - self.i_d(x, v) * (p['X_d'] - p['X_d_t']))
+        # dX['e_d_t'][:] = 1 / (p['T_q0_t']) * (-X['e_d_t'] + self.i_q(x, v) * (p['X_q'] - p['X_q_t']))
+        # dX['e_q_st'][:] = 1 / (p['T_d0_st']) * (X['e_q_t'] - X['e_q_st'] - self.i_d(x, v) * (p['X_d_t'] - p['X_d_st']))
+        # dX['e_d_st'][:] = 1 / (p['T_q0_st']) * (X['e_d_t'] - X['e_d_st'] + self.i_q(x, v) * (p['X_q_t'] - p['X_q_st']))
 
     def d(self, x, v):
         return np.exp(1j * (self.local_view(x)['angle'] - np.pi / 2))

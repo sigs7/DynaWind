@@ -34,15 +34,15 @@ if __name__ == '__main__':
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Short circuit
-        if t >= 1 and t <= 1.05:
-            ps.y_bus_red_mod[4,4] = 1e6
-        else:
-            ps.y_bus_red_mod[4,4] = 0
+        # if t >= 1 and t <= 1.05:
+        #     ps.y_bus_red_mod[4,4] = 1e6
+        # else:
+        #     ps.y_bus_red_mod[4,4] = 0
 
         if t > 1:
-            ps.vsc['VSC'].set_input('P_setp', 500)
+            ps.vsc['VSC'].set_input('P_setp', 100)
         if t > 5:
-            ps.vsc['VSC'].set_input('Q_setp', 200)
+            ps.vsc['VSC'].set_input('Q_setp', 50)
 
         # Simulate next step
         result = sol.step()
@@ -63,9 +63,12 @@ if __name__ == '__main__':
         res['VSC_Q'].append(ps.vsc['VSC'].Q(x, v).copy())
         res['VSC_Q_setp'].append(ps.vsc['VSC'].Q_setp(x, v).copy())
 
-        res["VSC_I"].append(abs(ps.vsc["VSC"].I_inj(x, v).copy()))
+        res["VSC_abs(I)"].append(abs(ps.vsc["VSC"].I_inj(x, v).copy()))
 
-    print('Simulation completed in {:.2f} seconds.'.format(time.time() - t_0))
+        res["VSC_Id"].append(ps.vsc["VSC"].I_d(x, v).copy())
+        res["VSC_Iq"].append(ps.vsc["VSC"].I_q(x, v).copy())
+
+    print('\n Simulation completed in {:.2f} seconds.'.format(time.time() - t_0))
 
     plt.figure()
     plt.plot(res['t'], res['gen_speed'], label = "Generator speed")
@@ -85,11 +88,19 @@ if __name__ == '__main__':
     # plt.show()
 
     plt.figure()
-    plt.plot(res['t'], res['VSC_I'], label = "VSC_I")
+    plt.plot(res['t'], res['VSC_abs(I)'], label = "VSC_abs(I)")
     plt.xlabel('Time [s]')
     plt.ylabel('VSC current injection [A]')
     plt.legend(loc='upper right')
 
-
+    fig, ax = plt.subplots(2)
+    ax[0].plot(res['t'], res['VSC_Id'], label = "VSC_Id")
+    ax[0].plot(res['t'], res['VSC_Iq'], label = "VSC_Iq")
+    ax[0].legend(loc='upper right')
+    
+    ax[1].plot(res['t'], res['VSC_Q'], label = "VSC_Q")
+    ax[1].plot(res['t'], res['VSC_Q_setp'], label = "VSC_Q_setp")
+    ax[1].legend(loc="upper right")
+    # plt.show()
 
     plt.show()

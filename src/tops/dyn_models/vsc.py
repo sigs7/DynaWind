@@ -10,6 +10,7 @@ class VSC(DAEModel):
 
     def bus_ref_spec(self):
         return {'terminal': self.par['bus']}
+        return {'terminal': self.par['bus']}
 
     def add_blocks(self):
         p = self.par
