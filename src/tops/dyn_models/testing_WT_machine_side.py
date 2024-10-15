@@ -28,7 +28,7 @@ ipmsm.set_prime_mover_reference(torque_ref=0.2, speed_ref=1.0)
 
 # Simulation parameters
 dt = 1e-3  # Time step
-simulation_time = 20  # Total simulation time
+simulation_time = 6  # Total simulation time
 
 # Lists to store the results
 time_values = []

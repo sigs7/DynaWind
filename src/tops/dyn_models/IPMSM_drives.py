@@ -112,8 +112,8 @@ class IPMSM(Converter, PrimeMover, MSIC):
 
         # Initialize PI controllers for i_d and i_q
         self.pi_controller_id = PIController_LAH(kp=1.0, ki=0.1)
-        self.pi_controller_iq = PIController_LAH(kp=20.0, ki=0.2)
-        self.pi_controller_speed = PIController_LAH(kp=5.0, ki=0.1)
+        self.pi_controller_iq = PIController_LAH(kp=5.0, ki=0.05)
+        self.pi_controller_speed = PIController_LAH(kp=100.0, ki=0.1)
 
         # Desired currents and speed
         self.i_d_ref = 0.0          # Må kanskje endres senere
@@ -187,8 +187,6 @@ class IPMSM(Converter, PrimeMover, MSIC):
 
         # Update reference voltages using PI controllers
         self.update_reference_voltages(dt)
-
-
 
         # Create a dictionary to hold the derivatives
         dx = {"speed": 0.0, "i_d": 0.0, "i_q": 0.0}
