@@ -2,24 +2,25 @@
 # The goal is to include the dynamics of electrical torque and include the inverter control
 
 import numpy as np
-from tops.dyn_models.blocks import *
-from tops.dyn_models.utils import DAEModel, output
-import numpy as np
-from tops.dyn_models.utils import DAEModel
-import tops.utility_functions as dps_uf
-import time
 import matplotlib.pyplot as plt
 
+# region Controller class
 class PIController_LAH:
-    def __init__(self, kp, ki):
+    def __init__(self, kp, ti):
         self.kp = kp
-        self.ki = ki
+        self.ti = ti
         self.integral = 0.0
 
     def compute(self, error, dt):
         self.integral += error * dt
-        return self.kp * error + self.ki * self.integral
 
+        # Anti-windup
+        if self.integral > 1.5:
+            self.integral = 1.5
+        if self.integral < -1.5:
+            self.integral = -1.5
+        
+        return self.kp * error + (self.kp/self.ti) * self.integral
 
 class MSIC:
     """
@@ -62,16 +63,33 @@ class Converter:
         self.vd_ref = vd
         self.vq_ref = vq
         self.alpha = alpha
+        self.T = 1e-4           # Time constant for the first-order filter
+
+    def clamp_value(self, value, limit):
+        if value > limit:
+            value = limit
+        if value < -limit:
+            value = -limit
+        return value
 
     def set_reference_voltages(self, vd_ref, vq_ref):
         self.vd_ref = vd_ref
         self.vq_ref = vq_ref
         # converter.update_voltages()
 
-    def update_voltages(self):
+    def update_voltages(self, vd_ctrl, vq_ctrl, dt):
         # Apply first-order filter to vd and vq
-        self.vd += self.alpha * (self.vd_ref - self.vd)
-        self.vq += self.alpha * (self.vq_ref - self.vq)
+        self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt
+        self.vq += (1/self.T) * (vq_ctrl - self.vq) * dt
+
+        # Using instantaneous values and limiting the voltages
+        # self.vd = vd_ctrl
+        # self.vq = vq_ctrl
+
+        # Limit the voltages
+        self.vd = self.clamp_value(self.vd, 5)
+        self.vq = self.clamp_value(self.vq, 5)
+
 
     def get_voltages(self):
         self.update_voltages()
@@ -81,7 +99,7 @@ class Converter:
 class IPMSM(Converter, PrimeMover, MSIC):
     """
     Internally Permanent Magnet Synchrnous Machine
-    
+
     """
     
     def __init__(self, params : dict, converter : Converter, prime_mover : PrimeMover, i_d0=0.0, i_q0=1.0):
@@ -111,17 +129,21 @@ class IPMSM(Converter, PrimeMover, MSIC):
         self.speed = self.primemover.speed
 
         # Initialize PI controllers for i_d and i_q
-        self.pi_controller_id = PIController_LAH(kp=1.0, ki=0.1)
-        self.pi_controller_iq = PIController_LAH(kp=5.0, ki=0.05)
-        self.pi_controller_speed = PIController_LAH(kp=100.0, ki=0.1)
+        self.pi_controller_id = PIController_LAH(kp=1.27, ti=0.14)
+        self.pi_controller_iq = PIController_LAH(kp=1.27, ti=0.14)
+        self.pi_controller_speed = PIController_LAH(kp=56, ti=0.04)
 
         # Desired currents and speed
         self.i_d_ref = 0.0          # Må kanskje endres senere
-        # self.i_q_ref = self.i_q
+        self.torque_ref = 0.0       # Will be asigned from speed controller
+        self.i_q_ref = 0.0
         # self.speed_ref = self.speed
 
-    def derivatives(self, dx, x, v):
+    # region derivatives
+
+    def derivatives(self):
         """
+        V2
         From block diagram electric drives IPMSM with currents as state variables, dynamic analysis state space model forelesning
         
         """
@@ -131,7 +153,7 @@ class IPMSM(Converter, PrimeMover, MSIC):
         Tq = p["x_q"]/(p["wn"]*p["rs"])
         Td = p["x_d"]/(p["wn"]*p["rs"])
         
-        Te = p["Psi_m"]*self.i_q - (p["x_q"]-p["x_d"])*self.i_d*self.i_q
+        Te = (p["Psi_m"]*self.i_q - (p["x_q"]-p["x_d"])*self.i_d*self.i_q)
 
         vd = self.converter.vd
         vq = self.converter.vq
@@ -140,76 +162,136 @@ class IPMSM(Converter, PrimeMover, MSIC):
         # dX["i_q"] = -1/Tq * self.i_q - (self.speed*p["x_d"]/p["x_q"])*self.i_d - (self.speed/p["x_q"])*vq - self.speed*p["Psi_m"]/p["x_q"] + (self.speed/p["x_q"])*vq
 
         dX["speed"] = 1/p["Tm"] * (self.primemover.torque - Te)
-        dX["i_d"] = -1/Td * self.i_d  + (self.speed/p["x_d"])*vd
-        dX["i_q"] = -1/Tq * self.i_q  + (self.speed/p["x_q"])*vq
+        dX["i_d"] = (-1/Td * self.i_d)  + (self.speed/p["x_d"])*vd
+        dX["i_q"] = (-1/Tq * self.i_q)  + (self.speed/p["x_q"])*vq
+        return dX    
 
-        return dX
+        # """
+        # V1
+        # From block diagram electric drives IPMSM with currents as state variables
+        
+        # """
+        # dX = {}
+        # p = self.params
 
-    # These should be set from the machine side controllers    
-    def set_current_references(self, i_d_ref, i_q_ref):
-        self.i_d_ref = i_d_ref
-        self.i_q_ref = i_q_ref
+        # if all(key in p for key in ["x_q", "rs", "x_d", "Psi_m", "Tm"]):
+        #     Tq = p["x_q"]/(self.speed*p["rs"])
+        #     Td = p["x_d"]/(self.speed*p["rs"])
+
+        #     # Te = p["Psi_m"]*self.i_q - (p["xq"]-p["xd"])*self.i_d*self.i_q
+        #     Psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+        #     Psi_q = self.i_q*p["x_q"]
+  
+        #     Te = Psi_d*self.i_q - Psi_q*self.i_d
+
+        #     vd = self.converter.vd
+        #     vq = self.converter.vq
+            
+        #     dX["speed"] = 1/p["Tm"] * (self.primemover.torque - Te)
+        #     dX["i_d"] = -1/Td * self.i_d + (self.speed/p["rs"])*vd
+        #     dX["i_q"] = -1/Tq * self.i_q + (self.speed/p["rs"])*vq
+        # else:
+        #     raise KeyError("One or more required parameters are missing in the params dictionary")
+        # return dX
+
+
+    # endregion
     
-    # This should come from the prime mover speed controller
-    def set_speed_reference(self, speed_ref):
-        self.speed_ref = speed_ref
+    # region Speed controll functions
 
-    def update_reference_voltages(self, dt):
+    def update_speed_control(self, dt):
+        """
+        Method to update the reference torque based on the speed error
+        Input: dt - time step
+        
+        Output: self.i_q_ref - updated reference q-axis current
+        """
+
+        # Compute speed error
+        error_speed = -(self.primemover.speed_ref - self.primemover.speed)
+
+        # Compute control signal for torque
+        self.torque_ref = self.pi_controller_speed.compute(error_speed, dt)
+
+        # Limit torque reference
+        self.torque_ref = self.clamp_value(self.torque_ref, 1.5)
+
+        # Calculate the required i_q_ref to produce the needed torque (algebraic)
+        p = self.params
+        self.i_q_ref = self.torque_ref / p["Psi_m"]
+
+        self.i_q_ref = self.clamp_value(self.i_q_ref, 1.2)
+
+    # endregion
+
+
+    # region Current controll functions
+    def update_current_control(self, dt):
+
         # Compute errors
         error_id = self.i_d_ref - self.i_d
         error_iq = self.i_q_ref - self.i_q
 
-        # Compute control signals
+        # Compute voltage control signals
         v_d = self.pi_controller_id.compute(error_id, dt)
         v_q = self.pi_controller_iq.compute(error_iq, dt)
 
-        # Set converter reference voltages
-        self.set_converter_voltages(v_d, v_q)
+        v_d = self.clamp_value(v_d, 5)
+        v_q = self.clamp_value(v_q, 5)
+
+        # Input voltage control signal to converter and update the voltages
+        self.set_converter_voltages(v_d, v_q, dt)
+        
+        # return v_d, v_q
+
+    # These should be set from the machine side controllers    
+    # def set_current_references(self, i_d_ref, i_q_ref):
+    #     self.i_d_ref = i_d_ref
+    #     self.i_q_ref = i_q_ref
     
-    def update_reference_torque(self, dt):
-        # Compute speed error
-        error_speed = self.primemover.speed_ref - self.speed
+    # endregion
 
-        # Compute control signal for torque
-        torque_ref = self.pi_controller_speed.compute(error_speed, dt)
-
-        # # Set prime mover reference torque
-        # self.set_prime_mover_reference(torque_ref, self.speed_ref)
-
-        # Calculate the required i_q_ref to produce the needed torque
-        p = self.params
-        self.i_q_ref = torque_ref / p["Psi_m"]
+    # This should come from the prime mover speed controller
+    def set_speed_reference(self, speed_ref):
+        self.speed_ref = speed_ref
 
     def update_states(self, dt):
 
         # Update reference torque using PI controller
-        self.update_reference_torque(dt)
+        self.update_speed_control(dt)
 
         # Update reference voltages using PI controllers
-        self.update_reference_voltages(dt)
+        self.update_current_control(dt)
 
         # Create a dictionary to hold the derivatives
-        dx = {"speed": 0.0, "i_d": 0.0, "i_q": 0.0}
-        x = {"speed": self.speed, "i_d": self.i_d, "i_q": self.i_q}
-        v = {}  # Add any additional inputs if needed
+        # dx = {"speed": 0.0, "i_d": 0.0, "i_q": 0.0}
+        # x = {"speed": self.speed, "i_d": self.i_d, "i_q": self.i_q}
+        # v = {}  # Add any additional inputs if needed
 
         # Calculate the derivatives
-        dX = self.derivatives(dx, x, v)
+        dX = self.derivatives()
 
         # Update the states using Euler integration
         self.speed += dX["speed"] * dt
+        self.primemover.speed += dX["speed"] * dt
         self.i_d += dX["i_d"] * dt
         self.i_q += dX["i_q"] * dt
 
-    def set_converter_voltages(self, vd_ref, vq_ref):
-        self.converter.set_reference_voltages(vd_ref, vq_ref)
-        self.converter.update_voltages()
+    def set_converter_voltages(self, v_d_ctrl, v_q_ctrl, dt):
+        self.converter.set_reference_voltages(v_d_ctrl, v_q_ctrl)
+        self.converter.update_voltages(v_d_ctrl, v_q_ctrl, dt)
 
     def set_prime_mover_reference(self, torque_ref, speed_ref):
         self.primemover.set_reference_values(torque_ref, speed_ref)
         self.primemover.update_values()
 
     # region Utility functions
+    def clamp_value(self, value, limit):
+        if value > limit:
+            value = limit
+        if value < -limit:
+            value = -limit
+        return value
 
     def get_Te(self):
         p = self.params
