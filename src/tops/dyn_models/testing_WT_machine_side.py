@@ -5,28 +5,19 @@ from tops.dyn_models.IPMSM_drives import *
 # Define parameters
 params = {
     "rs": 0.03,
-    "x_d": 0.3,
-    "x_q": 0.8,
-    "speed": 1,
-    "Psi_m": 1.6,
+    "x_d": 0.4,
+    "x_q": 0.4,
+    "Psi_m": 0.67,
     "Tm": 4,
-    "wn" : 2*np.pi*50  # nominal rad
+    "w_n" : 2*np.pi*50  # nominal rad
 }
 
 # Initiate the converter and the prime mover of the generator
-converter = Converter(vd=0.0, vq=0.0, alpha=0.85)               # Initiate the converter
+converter = Converter(vd=0.0, vq=1.0, alpha=0.85)               # Initiate the converter
 prime_mover = PrimeMover(torque=0.5, speed=0.8, alpha=0.5)      # Initiate the prime mover
 
 # Create IPMSM instance
-ipmsm = IPMSM(params, converter=converter, prime_mover=prime_mover, i_d0=0.0, i_q0=0.0)         # Initiate the IPMSM
-
-# Simulation parameters
-dt = 1e-4  # Time step 
-
-ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.5)
-
-#Multi timestep?
-simulation_time = 30  # Total simulation time
+ipmsm = IPMSM(params, converter=converter, prime_mover=prime_mover, i_d0=0.0, i_q0=0.5)         # Initiate the IPMSM
 
 # Lists to store the results
 time_values = []
@@ -57,12 +48,33 @@ error_speed_values = []
 error_iq_values = []
 error_id_values = []
 
+event_flag1 = True
+event_flag2 = True
+
+t = 0
+
+# Simulation parameters
+dt = 1e-4  # Time step 
+simulation_time = 30  # Total simulation time
+
 
 # Run the simulation
-for t in range(int(simulation_time / dt)):
+while t < simulation_time:
     # Update the states
-    ipmsm.update_states(dt)
 
+    if 1 < t < 2 and event_flag1:
+        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.5, ramp_time=10, dt=dt, current_time=t)
+        event_flag1 = False
+
+    if 15 < t < 30 and event_flag2:
+        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.3, ramp_time=10, dt=dt, current_time=t)
+        event_flag2 = False
+
+    # Update the prime mover reference values gradually
+
+    ipmsm.update_states(t,dt)
+
+    t += dt
     # Get mechanical states
     motor_speed = ipmsm.speed
 
@@ -83,7 +95,7 @@ for t in range(int(simulation_time / dt)):
     v_q_ref = ipmsm.converter.vq_ref
 
     # Store the results
-    time_values.append(t * dt)
+    time_values.append(t)
 
     # Store the mechanical states
     motor_torque_values.append(ipmsm.get_Te())
@@ -116,6 +128,7 @@ for t in range(int(simulation_time / dt)):
 fig, axs = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
 
 # Speed plot
+axs[0].plot(time_values, speed_ref_values, label='Speed Reference', linestyle='--')
 axs[0].plot(time_values, motor_speed_values, label='Motor Speed')
 axs[0].plot(time_values, primemover_speed_values, label='turbine speed')
 axs[0].set_ylabel('Speed (pu)')
@@ -125,6 +138,7 @@ axs[0].grid(True)
 # Torque plots
 axs[1].plot(time_values, motor_torque_values, label='motor torque')
 axs[1].plot(time_values, primemover_torque_values, label='turbine torque')
+axs[1].plot(time_values, torque_ref_values, label='Torque Reference', linestyle='--')
 axs[1].set_ylabel('Torque (pu)')
 axs[1].legend()
 axs[1].grid(True)
@@ -177,7 +191,7 @@ axs[1].grid(True)
 
 axs[2].plot(time_values, error_speed_values, label='Speed Error')
 axs[2].plot(time_values, torque_ref_values, label='Torque Ref')
-axs[2].plot(time_values, i_q_ref_values, label='i_q_ref')
+# axs[2].plot(time_values, i_q_ref_values, label='i_q_ref')
 axs[2].set_xlabel('Time (s)')
 axs[2].set_ylabel('Speed Error (pu)')
 axs[2].legend()
@@ -186,3 +200,5 @@ axs[2].grid(True)
 plt.tight_layout()
 plt.savefig("WT_machine_side_voltage_references.png")
 # plt.show()
+
+print("Simulation completed successfully")
