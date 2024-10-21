@@ -3,6 +3,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from tops.dyn_models.utils import DAEModel
+
 
 # region Controller class
 class PIController_LAH:
@@ -86,7 +88,7 @@ class Converter:
 
     def update_voltages(self, vd_ctrl, vq_ctrl, dt):
         # Apply first-order filter to vd and vq
-        self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt
+        self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt        # Tsw = 2/3*fsw
         self.vq += (1/self.T) * (vq_ctrl - self.vq) * dt
 
         # Using instantaneous values and limiting the voltages
@@ -333,6 +335,36 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
         return self.speed * self.primemover.torque
 
     # endregion
+
+
+# region GridSideConverter class
+class GridSideConverter(DAEModel):
+    """
+    Model of the DC link and Grid Side Converter.
+    Its purpose is to control P and Q to the grid and to control the DC link voltage. 
+
+    """
+    def __init__(self, vdc: float = 1.0, i0: float = 1.0):
+        pass
+
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# endregion
+
 
 ######################
 # 

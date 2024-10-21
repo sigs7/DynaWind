@@ -7,7 +7,7 @@ params = {
     "rs": 0.03,
     "x_d": 0.4,
     "x_q": 0.4,
-    "Psi_m": 0.67,
+    "Psi_m": 0.9,
     "Tm": 4,
     "w_n" : 2*np.pi*50  # nominal rad
 }
@@ -55,19 +55,21 @@ t = 0
 
 # Simulation parameters
 dt = 1e-4  # Time step 
-simulation_time = 30  # Total simulation time
+simulation_time = 35  # Total simulation time
 
 
 # Run the simulation
 while t < simulation_time:
+    # Print the percentage of simulation completed
+    if int(t / dt) % int(simulation_time / 100 / dt) == 0:
+        print(f"\rSimulation {t / simulation_time * 100:.2f}% complete", end='')
     # Update the states
-
-    if 1 < t < 2 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.5, ramp_time=10, dt=dt, current_time=t)
+    if t > 2 and event_flag1:
+        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.3, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
-    if 15 < t < 30 and event_flag2:
-        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.3, ramp_time=10, dt=dt, current_time=t)
+    if t > 20 and event_flag2:
+        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
         event_flag2 = False
 
     # Update the prime mover reference values gradually
@@ -123,7 +125,7 @@ while t < simulation_time:
     error_id_values.append(ipmsm.i_d_ref - i_d)
 
 
-
+print("Plotting in progress...")
 # Plot the results of votlage and current
 fig, axs = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
 
@@ -201,4 +203,5 @@ plt.tight_layout()
 plt.savefig("WT_machine_side_voltage_references.png")
 # plt.show()
 
+print("")
 print("Simulation completed successfully")
