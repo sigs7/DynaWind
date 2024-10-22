@@ -1,5 +1,4 @@
 # GPT FMU aaah nr 2
-# hard copy of gptfmu2.py to adjust into OpenFAST FMU
 
 # Custom input - adapted from https://github.com/CATIA-Systems/FMPy/blob/main/fmpy/examples/custom_input.py
 
@@ -17,13 +16,13 @@ import matplotlib.pyplot as plt
 def simulate_custom_input(show_plot=True):
 
     # define the model name and simulation parameters
-    fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
+    # fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
     
     #debugging fmu
-    # fmu_filename = 'CoupledClutches.fmu'
+    fmu_filename = 'CoupledClutches.fmu'
     start_time = 0.0
     stop_time = 2
-    step_size = 1e-4
+    step_size = 1e-3
 
     # validate_fmu(fmu_filename)
     # read the model description
@@ -39,36 +38,12 @@ def simulate_custom_input(show_plot=True):
     # for name, vr in vrs.items():
     #     print(f"Variable: {name}, Value Reference: {vr}")
 
-    # Is defined in SIMULINK as getReal(6-19)
+
     # get the value references for the variables we want to get/set
-    vr_output1 = vrs['GenPwr']  # Replace 'Output1' with the actual variable name
-    vr_output2 = vrs['GenTq']  # Replace 'Output2' with the actual variable name
-    vr_output3 = vrs['HSShftV']  # Replace 'Output3' with the actual variable name
-    vr_output4 = vrs['GenSpeed']
-
-
-    vrs['testNr'] = 1001
-    vrs['timeStart'] = 0.0
-    vrs['Mode'] = 1.0
-    vrs['HSShftV'] = 0.0
-    vrs['GenPwr'] = 0.0
-    vrs['ElecPwrCom'] = 0.0
-
-
-    # Print the value references to verify them
-    for name, vr in vrs.items():
-        print(f"Variable: {name}, Value Reference: {vr}")
-
-    # Need to define certain aspects of the simulation:
-    # testNr 0 -> 1001
-    # timeStart 1 -> 0.0
-    # Mode 2 -> 1.0
-    # HSShftV 3 -> 0.0
-    # GenPwr 4 -> 0.0
-    # ElecPwrCom 5 -> 0.0
-
-    # setReal in SIMULINK are only ( 3 : 7.55 , 4 : 0.000 , 5 : 20_000)
-
+    vr_output1 = vrs['outputs[1]']  # Replace 'Output1' with the actual variable name
+    vr_output2 = vrs['outputs[2]']  # Replace 'Output2' with the actual variable name
+    vr_output3 = vrs['outputs[3]']  # Replace 'Output3' with the actual variable name
+    vr_output4 = vrs['outputs[4]']
 
     # extract the FMU
     unzipdir = extract(fmu_filename)
@@ -77,7 +52,6 @@ def simulate_custom_input(show_plot=True):
                     unzipDirectory=unzipdir,
                     modelIdentifier=model_description.coSimulation.modelIdentifier,
                     instanceName='instance1')
-
 
     # initialize
     fmu.instantiate()
@@ -88,17 +62,19 @@ def simulate_custom_input(show_plot=True):
     time = start_time
     rows = []  # list to record the results
 
-    # Simulation loop
+    # simulation loop
     while time < stop_time:
-        # Set initial values for the variables
-        fmu.setReal([3],[7.55])
-        fmu.setReal([4],[0.0])
-        fmu.setReal([5],[20_000])
 
+        # Example: Set inputs from the input data (replace with actual logic)
+        # Assuming input_data contains time-series data for each input variable
+        # if 'input1.txt' in input_data:
+        #     input_value = np.interp(time, input_data['input1.txt'][:, 0], input_data['input1.txt'][:, 1])
+        #     fmu.setReal([vr_mode], [input_value])
 
-        # Perform one step
+        # perform one step
+        # fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
         try:
-            # print(f"Performing doStep at time {time}")
             fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         except Exception as e:
             print(f"Error during doStep at time {time}: {e}")
@@ -110,24 +86,19 @@ def simulate_custom_input(show_plot=True):
             output2 = fmu.getReal([vr_output2])[0]
             output3 = fmu.getReal([vr_output3])[0]
             output4 = fmu.getReal([vr_output4])[0]
-            print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
         except Exception as e:
             print(f"Error getting output at time {time}: {e}")
             break
 
         # Append the results
-        rows.append((time, output1, output2, output3, output4))
+        rows.append((time, output1, output2, output3, output4))       #, output3, output4))
 
 
         # advance the time
         time += step_size
 
-    # Terminate the FMU
-    try:
-        fmu.terminate()
-    except Exception as e:
-        print(f"Error during termination: {e}")
 
+    fmu.terminate()
     fmu.freeInstance()
 
     # clean up

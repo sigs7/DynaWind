@@ -1,0 +1,83 @@
+
+ **************************************************************************************************
+ OpenFAST
+
+ Copyright (C) 2024 National Renewable Energy Laboratory
+ Copyright (C) 2024 Envision Energy USA LTD
+
+ This program is licensed under Apache License Version 2.0 and comes with ABSOLUTELY NO WARRANTY.
+ See the "LICENSE" file distributed with this software for details.
+ **************************************************************************************************
+
+ OpenFAST--128-NOTFOUND
+ Compile Info:
+  - Compiler: GCC version 8.1.0
+  - Architecture: 64 bit
+  - Precision: double
+  - OpenMP: No
+  - Date: Aug 19 2024
+  - Time: 11:37:49
+ Execution Info:
+  - Date: 10/22/2024
+  - Time: 11:38:13+0200
+
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: Time in OpenFAST is missing from output list                                                                            
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: HSShftTq in OpenFAST is missing from output list                                                                        
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: GenTq in OpenFAST is missing from output list                                                                           
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: Wind1VelX in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: RtVAvgxh in OpenFAST is missing from output list                                                                        
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: BldPitch1 in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: NacYaw in OpenFAST is missing from output list                                                                          
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: GenSpeed in OpenFAST is missing from output list                                                                        
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: RotSpeed in OpenFAST is missing from output list                                                                        
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: LSSGagPxa in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: Azimuth in OpenFAST is missing from output list                                                                         
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: GenAccel in OpenFAST is missing from output list                                                                        
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: YawBrTAxp in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: YawBrTAyp in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
+  Time: -20 of 0 seconds.
+
+  OpenFAST completed.
+
