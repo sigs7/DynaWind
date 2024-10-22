@@ -22,8 +22,8 @@ def simulate_custom_input(show_plot=True):
     #debugging fmu
     # fmu_filename = 'CoupledClutches.fmu'
     start_time = 0.0
-    stop_time = 2
-    step_size = 1e-4
+    stop_time = 1.33
+    step_size = 0.01
 
     # validate_fmu(fmu_filename)
     # read the model description

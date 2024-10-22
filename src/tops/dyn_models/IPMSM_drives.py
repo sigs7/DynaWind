@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from tops.dyn_models.utils import DAEModel
 
 
-# region Controller class
+# region PI Controller class
 class PIController_LAH:
     def __init__(self, kp, ti):
         self.kp = kp
@@ -338,7 +338,7 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
 
 
 # region GridSideConverter class
-class GridSideConverter(DAEModel, IPMSM):
+class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
     """
 
     VSC PQ model - ref to VSC1 in tops/dyn_models/vsc1.py - cite Sjur Føyen
@@ -354,6 +354,27 @@ class GridSideConverter(DAEModel, IPMSM):
         ],
     }
 
+    Parameters:
+    w_n: Nominal frequency
+    L_tot: Total inductance
+    Cdc: DC link capacitance
+
+    References:
+    Vdc_ref
+    Pref
+    Qref
+    id_ref
+    iq_ref
+
+    States:
+    i_d
+    i_q
+    vdc
+    angle
+    xpll    integral i pll
+
+
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -362,10 +383,56 @@ class GridSideConverter(DAEModel, IPMSM):
         self.bus_idx = np.array(np.zeros(self.n_units), dtype=[(key, int) for key in self.bus_ref_spec().keys()])
         self.bus_idx_red = np.array(np.zeros(self.n_units), dtype=[(key, int) for key in self.bus_ref_spec().keys()])
 
-        self.pref = self.par["p_ref"]
-        self.qref = self.par["q_ref"]
+        self.pref = self.par["p_ref"]           # Active power reference will come from the IPMSM
+        self.qref = self.par["q_ref"]           # Reactive power reference can/should come from grid side
+
+        self.vdc = 1.0
+        self.vdc_ref = self.vdc
+
+        self.vdc_controller = PIController_LAH(kp=1.0, ti=0.1)
+
+
 
     # region Definitions
+
+    def init_from_load_flow(self, x_0, v_0, S):
+        X = self.local_view(x_0)
+
+        # self._input_values['p_ref'] = self.par['p_ref']       # unescassary?
+        # self._input_values['q_ref'] = self.par['q_ref']
+
+        vg = v_0[self.bus_idx_red['terminal']]
+        X['angle'] = np.angle(vg)
+
+        X['i_d'] = self.par['p_ref']/abs(vg)
+        X['i_q'] = self.par['q_ref']/abs(vg)
+        X['x_pll'] = 0
+        X["vdc"] = 1.0
+        
+    def state_derivatives(self, dx, x, v):
+        dX = self.local_view(dx)
+        X = self.local_view(x)
+        par = self.par
+
+        dp = self.p_ref(x,v) - self.p_e(x, v)
+        dq = -self.q_ref(x,v) + self.q_e(x, v)
+        i_d_ref = dp * par['k_p'] + X['x_p']     # Should be the output from the IPMSM
+        i_q_ref = dq * par['k_q'] + X['x_q']     # Should be the output from the IPMSM/grid side
+
+        # Limiters
+        i_ref = (i_d_ref+1j*i_q_ref)
+        i_ref = i_ref*par['i_max']/np.maximum(par['i_max'],abs(i_ref))
+        # X['x_p'] = np.maximum(np.minimum(X['x_p'],par['i_max']),-par['i_max'])
+        # X['x_q'] = np.maximum(np.minimum(X['x_q'],par['i_max']),-par['i_max'])
+
+        dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
+        dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
+        # dX['x_p'][:] = par['k_p'] / (par['T_p']) * dp
+        # dX['x_q'][:] = par['k_q'] / (par['T_q']) * dq
+        dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
+        dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
+        #dX['angle'][:] = 0
+        return    
 
     def load_flow_pq(self):
         return self.bus_idx['terminal'], -self.par['p_ref']*self.par['S_n'], -self.par['q_ref']*self.par['S_n']
@@ -400,45 +467,13 @@ class GridSideConverter(DAEModel, IPMSM):
         """
         return ['p_ref', 'q_ref']
 
-    def state_derivatives(self, dx, x, v):
-        dX = self.local_view(dx)
-        X = self.local_view(x)
-        par = self.par
+    
 
-        dp = self.p_ref(x,v) - self.p_e(x, v)
-        dq = -self.q_ref(x,v) + self.q_e(x, v)
-        i_d_ref = dp * par['k_p'] + X['x_p']
-        i_q_ref = dq * par['k_q'] + X['x_q']
+    def update_idq_control(self):
+        # self.i_d_ref = 
 
-        # Limiters
-        i_ref = (i_d_ref+1j*i_q_ref)
-        i_ref = i_ref*par['i_max']/np.maximum(par['i_max'],abs(i_ref))
-        X['x_p'] = np.maximum(np.minimum(X['x_p'],par['i_max']),-par['i_max'])
-        X['x_q'] = np.maximum(np.minimum(X['x_q'],par['i_max']),-par['i_max'])
 
-        dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
-        dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
-        dX['x_p'][:] = par['k_p'] / (par['T_p']) * dp
-        dX['x_q'][:] = par['k_q'] / (par['T_q']) * dq
-        dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
-        dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
-        #dX['angle'][:] = 0
-        return
-
-    def init_from_load_flow(self, x_0, v_0, S):
-        X = self.local_view(x_0)
-
-        self._input_values['p_ref'] = self.par['p_ref']
-        self._input_values['q_ref'] = self.par['q_ref']
-
-        v0 = v_0[self.bus_idx_red['terminal']]
-
-        X['i_d'] = self.par['p_ref']/abs(v0)
-        X['i_q'] = self.par['q_ref']/abs(v0)
-        X['x_p'] = X['i_d']
-        X['x_q'] = X['i_q']
-        X['x_pll'] = 0
-        X['angle'] = np.angle(v0)
+        pass
 
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
