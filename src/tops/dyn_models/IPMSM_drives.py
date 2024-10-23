@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tops.dyn_models.utils import DAEModel
 
-
 # region PI Controller class
 class PIController_LAH:
     def __init__(self, kp, ti):
@@ -24,30 +23,24 @@ class PIController_LAH:
         
         return self.kp * error + (self.kp/self.ti) * self.integral
 
-class MSIC:
-    """
-    Machine Side Inverter Controller
-
-    Inputs: 
-        P_ref
-        V_ref
-    
-    Outputs:
-        Vd_ref
-        Vq_ref
-
-    """
 
 # region PrimeMover class
 
 class PrimeMover:
-    def __init__(self, torque=1, speed=1, alpha=0.5):
-        self.torque = torque
-        self.speed = speed
-        self.torque_ref = torque
-        self.speed_ref = speed
-        self.alpha = alpha
-        self.T = 1e-1           # Time constant for the first-order filter
+    def __init__(self, **params):
+
+        self.params = params
+
+        if "T_pm" in params:
+            self.Tpm = params["T_pm"]
+        else:
+            self.Tpm = 1e-1
+
+        self.torque = params["torque_0"] if "torque_0" in params else 0.5
+        self.speed = params["speed_0"] if "speed_0" in params else 0.5
+        self.torque_ref = self.torque
+        self.speed_ref = self.speed
+        
 
     def set_reference_values(self, torque_ref, speed_ref):
         self.torque_ref = torque_ref
@@ -55,7 +48,8 @@ class PrimeMover:
 
     def update_values(self, dt):
         # Apply first-order filter to torque and speed
-        self.torque += (1/self.T)*(self.torque_ref - self.torque)*dt
+        self.torque += (1 / self.Tpm) * (self.torque_ref - self.torque) * dt
+        self.speed += (1 / self.Tpm) * (self.speed_ref - self.speed) * dt
 
     def get_values(self):
         self.update_values()
@@ -65,14 +59,21 @@ class PrimeMover:
 
 # region Converter class
 
-class Converter:
-    def __init__(self, vd=0.0, vq=0.0, alpha=0.95):
-        self.vd = vd
-        self.vq = vq
-        self.vd_ref = vd
-        self.vq_ref = vq
-        self.alpha = alpha
-        self.T = 1e-4           # Time constant for the first-order filter
+class MachineSideConverter:
+
+    def __init__(self, **params):
+        self.params = params
+        if "T_conv" in params:
+            self.T = params["T_conv"]
+        else:
+            self.T = 1e-4
+
+        self.vd = params["vd_0"] if "vd_0" in params else 0.0       # Same code as above only in one line :D
+        self.vq = params["vq_0"] if "vq_0" in params else 0.0
+
+        self.vd_ref = self.vd
+        self.vq_ref = self.vq
+        
 
     def clamp_value(self, value, limit):
         if value > limit:
@@ -84,16 +85,11 @@ class Converter:
     def set_reference_voltages(self, vd_ref, vq_ref):
         self.vd_ref = vd_ref
         self.vq_ref = vq_ref
-        # converter.update_voltages()
 
     def update_voltages(self, vd_ctrl, vq_ctrl, dt):
         # Apply first-order filter to vd and vq
         self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt        # Tsw = 2/3*fsw
         self.vq += (1/self.T) * (vq_ctrl - self.vq) * dt
-
-        # Using instantaneous values and limiting the voltages
-        # self.vd = vd_ctrl
-        # self.vq = vq_ctrl
 
         # Limit the voltages
         self.vd = self.clamp_value(self.vd, 5)
@@ -107,37 +103,36 @@ class Converter:
 # endregion
 
 # region IMPSM class
+
 # Tror jeg kan unngå å bruke DAEModel ettersom at MSC er dekoblet fra det dynamiske nettet
-class IPMSM(Converter, PrimeMover, PIController_LAH):
+class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
     """
     Internally Permanent Magnet Synchrnous Machine
 
     """
     
-    def __init__(self, params : dict, converter : Converter, prime_mover : PrimeMover, i_d0=0.0, i_q0=1.0):
+    def __init__(self, ipmsm_params : dict, MSC_params : dict, prime_mover_params : dict):
+        
         """
         params = {
             "x_q": 0.533,         q-axis reactance [pu]
-            "x_d": 1.07,         d-axis reactancce
-            "speed": 1.0,       nominal speed
-            "rs": 0.01,         stator resistance
-            "Psi_m": 0.8,       Permanent magnet flux linkage
-            "T_m" : 3.7         Mechanical time constant -> Tm =(J*omega**2)/Sn
-            
-            # Other parameters...
-            }
+            "x_d": 1.07,          d-axis reactancce
+            "speed": 1.0,         Nominal speed
+            "rs": 0.01,           Stator resistance
+            "Psi_m": 0.8,         Permanent magnet flux linkage
+            "T_m" : 3.7           Mechanical time constant -> Tm =(J*omega**2)/Sn
         
         """
         # Assigning the basic parameters of the IPMSM
-        self.params = params
+        self.params = ipmsm_params
 
         # Assigning the converter and prime mover class. They should be initated before initiating the IPMSM
-        self.converter = converter
-        self.primemover = prime_mover
+        self.converter = MachineSideConverter(**MSC_params)
+        self.primemover = PrimeMover(**prime_mover_params)
 
         # Initiating some basic initial values of operation, should be updated later based of load flow solution
-        self.i_d = i_d0
-        self.i_q = i_q0
+        self.i_d = 0.0
+        self.i_q = 0.5
         self.speed = self.primemover.speed
 
         self.speed_measured = self.speed
@@ -180,6 +175,7 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
                     T_m = 0.8; [s] mechanical time constant
         
         """
+
         dX = {}
         p = self.params
         
@@ -191,9 +187,11 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
 
         Te = psi_d*self.i_q - psi_q*self.i_d
 
+        # change in speed Te - T_L
+
         dX["speed"] = 1/p["Tm"] * (self.primemover.torque - Te)
 
-        return dX    
+        return dX
        
     # endregion
     
@@ -305,7 +303,6 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
                 self.primemover.torque_ref = self.target_torque_ref
                 self.ramp_duration = 0  # Ramp completed
 
-
     # region Utility functions
     def clamp_value(self, value, limit):
         if value > limit:
@@ -328,8 +325,9 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
         return self.speed
     
     def get_Pe(self):
-        p = self.params
-        return self.Vq*self.i_q + self.Vd*self.i_d + (self.i_d**2 + self.i_q**2)*p["rs"]
+        return self.converter.vd*self.i_d + self.converter.vq*self.i_q      # 3/2 fac?
+        # p = self.params
+        # return self.Vq*self.i_q + self.Vd*self.i_d + (self.i_d**2 + self.i_q**2)*p["rs"]
     
     def get_Pm(self):
         return self.speed * self.primemover.torque
@@ -338,9 +336,8 @@ class IPMSM(Converter, PrimeMover, PIController_LAH):
 
 
 # region GridSideConverter class
-class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
+class GridSideConverter(DAEModel, IPMSM):
     """
-
     VSC PQ model - ref to VSC1 in tops/dyn_models/vsc1.py - cite Sjur Føyen
 
     Model of the DC link and Grid Side Converter.
@@ -349,14 +346,13 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
 
     'vsc': {
         'VSC_PQ': [
-            ['name', 'bus', 'S_n', 'p_ref', 'q_ref',  'k_p', 'k_q', 'T_p', 'T_q', 'k_pll','T_pll', 'T_i', 'i_max'],
-            ['VSC1', 'B1',    50,     1,       0,       1,      1,    0.1,   0.1,     5,      1,      0.01,    1.2],
+            ['name',   'bus', 'S_n',   "pref",   "qref",   'Cdc',   'k_p',    'k_q',  'T_p',  'T_q',     'k_pll',   'T_pll',    'T_i',    'i_max'],
+            ['VSC1',   'B1',    50,      1,         0,      0.1,       1,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
         ],
     }
 
     Parameters:
     w_n: Nominal frequency
-    L_tot: Total inductance
     Cdc: DC link capacitance
 
     References:
@@ -373,37 +369,35 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
     angle
     xpll    integral i pll
 
-
-
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, params : dict, ipmsm : IPMSM, vsc_params : dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.bus_idx = np.array(np.zeros(self.n_units), dtype=[(key, int) for key in self.bus_ref_spec().keys()])
         self.bus_idx_red = np.array(np.zeros(self.n_units), dtype=[(key, int) for key in self.bus_ref_spec().keys()])
 
-        self.pref = self.par["p_ref"]           # Active power reference will come from the IPMSM
-        self.qref = self.par["q_ref"]           # Reactive power reference can/should come from grid side
+        self.pref = IPMSM.get_Pe()              # Active power reference will come from the IPMSM
+        self.qref = 0                           # Reactive power reference can/should come from grid side
 
         self.vdc = 1.0
         self.vdc_ref = self.vdc
 
-        self.vdc_controller = PIController_LAH(kp=1.0, ti=0.1)
+        self.vdc_controller = PIController_LAH(kp=0.3, ti=0.003)
 
-
+        self.par = params
 
     # region Definitions
 
     def init_from_load_flow(self, x_0, v_0, S):
         X = self.local_view(x_0)
 
-        # self._input_values['p_ref'] = self.par['p_ref']       # unescassary?
-        # self._input_values['q_ref'] = self.par['q_ref']
+        self._input_values['p_ref'] = self.par['p_ref']       # unescassary?
+        self._input_values['q_ref'] = self.par['q_ref']
 
         vg = v_0[self.bus_idx_red['terminal']]
-        X['angle'] = np.angle(vg)
 
+        X['angle'] = np.angle(vg)
         X['i_d'] = self.par['p_ref']/abs(vg)
         X['i_q'] = self.par['q_ref']/abs(vg)
         X['x_pll'] = 0
@@ -414,23 +408,21 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
         X = self.local_view(x)
         par = self.par
 
-        dp = self.p_ref(x,v) - self.p_e(x, v)
-        dq = -self.q_ref(x,v) + self.q_e(x, v)
-        i_d_ref = dp * par['k_p'] + X['x_p']     # Should be the output from the IPMSM
-        i_q_ref = dq * par['k_q'] + X['x_q']     # Should be the output from the IPMSM/grid side
+        self.pref = IPMSM.get_Pe() - self.vdc_controller.compute((self.vdc_ref - X["vdc"]))*X["vdc"]
+        self.qref = 0.0     # Should be updated from grid side command
+
+        i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.pref * self.v_d(x,v) - self.qref * self.v_q(x,v))
+        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.pref * self.v_q(x,v) + self.qref * self.v_d(x,v))
 
         # Limiters
         i_ref = (i_d_ref+1j*i_q_ref)
         i_ref = i_ref*par['i_max']/np.maximum(par['i_max'],abs(i_ref))
-        # X['x_p'] = np.maximum(np.minimum(X['x_p'],par['i_max']),-par['i_max'])
-        # X['x_q'] = np.maximum(np.minimum(X['x_q'],par['i_max']),-par['i_max'])
 
         dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
         dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
-        # dX['x_p'][:] = par['k_p'] / (par['T_p']) * dp
-        # dX['x_q'][:] = par['k_q'] / (par['T_q']) * dq
         dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
         dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
+        dX["vdc"][:] = (self.pref - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
         #dX['angle'][:] = 0
         return    
 
@@ -467,14 +459,6 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
         """
         return ['p_ref', 'q_ref']
 
-    
-
-    def update_idq_control(self):
-        # self.i_d_ref = 
-
-
-        pass
-
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
         return self.bus_idx_red['terminal'], self.i_inj(x, v) * i_n_r
@@ -495,6 +479,9 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
     def v_q(self,x,v):
         return (self.v_t(x,v)*np.exp(-1j*self.local_view(x)['angle'])).imag
     
+    def v_d(self,x,v):
+        return (self.v_t(x,v)*np.exp(-1j*self.local_view(x)['angle'])).real     # Added
+    
     def p_e(self, x, v):
         return self.s_e(x,v).real
 
@@ -502,10 +489,14 @@ class GridSideConverter(DAEModel, IPMSM, PIController_LAH):
         return self.s_e(x,v).imag
 
     # endregion
-    # def __init__(self, vdc: float = 1.0, i0: float = 1.0):
-    # pass
 
 
+# class WindPowerSystem(GridSideConverter):         # Nødvendig?
+
+
+
+
+    
 
 
 

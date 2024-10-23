@@ -93,12 +93,22 @@ def load():
             ]
         },
 
-        'vsc': {
-            'VSC': [
-        ['name',    'T_pll',    'T_i',  'bus',  'P_K_p',    'P_K_i',    'Q_K_p',    'Q_K_i',    'P_setp',   'Q_setp',   ],
-        ['VSC1',    0.1,        1,      'B8',   0.1,        0.1,        0.1,        0.1,        100,          100],
-            ]
+        # 'vsc': {
+        #     'VSC': [
+        # ['name',    'T_pll',    'T_i',  'bus',  'P_K_p',    'P_K_i',    'Q_K_p',    'Q_K_i',    'P_setp',   'Q_setp',   ],
+        # ['VSC1',    0.1,        1,      'B8',   0.1,        0.1,        0.1,        0.1,        100,          100],
+        #     ]
     
+        # }
+        'vsc1': {
+            'VSC_PQ': [
+                ['name', 'bus', 'S_n', 'p_ref', 'q_ref',  'k_p', 'k_q', 'T_p', 'T_q', 'k_pll','T_pll', 'T_i', 'i_max'],
+                ['VSC1', 'B1',    100,     1,       0,       1,      1,    0.1,   0.1,     5,      1,      0.01,    1.2],
+            ],
         }
+
+        # 'wt': {
+        #     'WT': [
+        #         ['name', 'bus', 'S_n', 'p_ref', 'q_ref',  'k_p', 'k_q', 'T_p', 'T_q', 'k_pll','T_pll', 'T_i', 'i_max'],
     }
 

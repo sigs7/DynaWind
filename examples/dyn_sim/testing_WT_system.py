@@ -1,16 +1,61 @@
+# Lets try to test the entire WT system
+
 import sys
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
-from tops.dyn_models.vsc1 import VSC_PV
+import importlib
+importlib.reload(dps)
+import importlib
+
 from tops.dyn_models.IPMSM_drives import *
+from tops.dyn_models.vsc1 import VSC_PV
+
+# Define parameters
+ipmsm_params = {
+    "rs": 0.03,
+    "x_d": 0.4,
+    "x_q": 0.4,
+    "Psi_m": 0.9,
+    "Tm": 4,
+    "w_n" : 2*np.pi*50  # nominal rad
+}
+
+MSC_params = {"T_conv" : 1e-4,
+              "vq_0" : 0.5,
+              "vd_0" : 0.0
+}
+
+prime_mover_params = {"T_pm" : 1e-1,
+                      "speed_0" : 0.5,
+                      "torque_0" : 0.7
+}
 
 
-# Må sjekke ut kordan ej ønsker å initialisere WT inn i "model"
-# All dyn med nettet skjer gjennom "GridSideConverter" klassen
+vsc_params = {
+    "name": "VSC1",
+    "bus": "B1",
+    "S_n": 50,
+    "p_ref": 1,
+    "q_ref": 0,
+    "k_p": 1,
+    "k_q": 1,
+    "T_p": 0.1,
+    "T_q": 0.1,
+    "k_pll": 5,
+    "T_pll": 1,
+    "T_i": 0.01,
+    "i_max": 1.2
+}
 
+
+# Create IPMSM instance
+ipmsm = IPMSM(ipmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mover_params)         # Initiate the IPMSM
+
+# Create GridSideConverter instance
+WindTurbine = GridSideConverter(DAEModel, ipmsm = ipmsm, vsc_params = vsc_params)               # Initiate the grid side converter / Wind turbine to be connected to TOPS
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@
 from tops.dyn_models.IPMSM_drives import *
 
 # Define parameters
-params = {
+ipmsm_params = {
     "rs": 0.03,
     "x_d": 0.4,
     "x_q": 0.4,
@@ -12,12 +12,18 @@ params = {
     "w_n" : 2*np.pi*50  # nominal rad
 }
 
-# Initiate the converter and the prime mover of the generator
-converter = Converter(vd=0.0, vq=1.0, alpha=0.85)               # Initiate the converter
-prime_mover = PrimeMover(torque=0.5, speed=0.8, alpha=0.5)      # Initiate the prime mover
+MSC_params = {"T_conv" : 1e-4,
+              "vq_0" : 0.5,
+              "vd_0" : 0.0
+}
+
+prime_mover_params = {"T_pm" : 1e-1,
+                      "speed_0" : 0.5,
+                      "torque_0" : 0.7
+}
 
 # Create IPMSM instance
-ipmsm = IPMSM(params, converter=converter, prime_mover=prime_mover, i_d0=0.0, i_q0=0.5)         # Initiate the IPMSM
+ipmsm = IPMSM(ipmsm_params = ipmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mover_params)         # Initiate the IPMSM
 
 # Lists to store the results
 time_values = []
@@ -65,7 +71,7 @@ while t < simulation_time:
         print(f"\rSimulation {t / simulation_time * 100:.2f}% complete", end='')
     # Update the states
     if t > 2 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.3, ramp_time=1, dt=dt, current_time=t)
+        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.4, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
     if t > 20 and event_flag2:
@@ -124,7 +130,7 @@ while t < simulation_time:
     error_iq_values.append(ipmsm.i_q_ref - i_q)
     error_id_values.append(ipmsm.i_d_ref - i_d)
 
-
+print("")
 print("Plotting in progress...")
 # Plot the results of votlage and current
 fig, axs = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
@@ -203,5 +209,4 @@ plt.tight_layout()
 plt.savefig("WT_machine_side_voltage_references.png")
 # plt.show()
 
-print("")
 print("Simulation completed successfully")
