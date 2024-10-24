@@ -19,7 +19,7 @@ MSC_params = {"T_conv" : 1e-4,
 
 prime_mover_params = {"T_pm" : 1e-1,
                       "speed_0" : 0.5,
-                      "torque_0" : 0.7
+                      "torque_0" : 0.5
 }
 
 # Create IPMSM instance
@@ -41,6 +41,8 @@ i_q_values = []
 v_d_values = []
 v_q_values = []
 
+motor_Pe_values = []
+
 # Control signals
 i_d_ref_values = []
 i_q_ref_values = []
@@ -61,7 +63,7 @@ t = 0
 
 # Simulation parameters
 dt = 1e-4  # Time step 
-simulation_time = 35  # Total simulation time
+simulation_time = 30  # Total simulation time
 
 
 # Run the simulation
@@ -70,8 +72,8 @@ while t < simulation_time:
     if int(t / dt) % int(simulation_time / 100 / dt) == 0:
         print(f"\rSimulation {t / simulation_time * 100:.2f}% complete", end='')
     # Update the states
-    if t > 2 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.4, ramp_time=1, dt=dt, current_time=t)
+    if t > 5 and event_flag1:
+        ipmsm.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
     if t > 20 and event_flag2:
@@ -80,11 +82,11 @@ while t < simulation_time:
 
     # Update the prime mover reference values gradually
 
-    ipmsm.update_states(t,dt)
+    ipmsm.update_states(t , dt)
 
     t += dt
     # Get mechanical states
-    motor_speed = ipmsm.speed
+    # motor_speed = ipmsm.speed
 
     # Get electrical states
     i_d = ipmsm.i_d
@@ -107,7 +109,7 @@ while t < simulation_time:
 
     # Store the mechanical states
     motor_torque_values.append(ipmsm.get_Te())
-    motor_speed_values.append(motor_speed)
+    motor_speed_values.append(ipmsm.speed)
     primemover_torque_values.append(ipmsm.primemover.torque)
     primemover_speed_values.append(ipmsm.primemover.speed)
 
@@ -116,6 +118,8 @@ while t < simulation_time:
     i_q_values.append(i_q)
     v_d_values.append(v_d)
     v_q_values.append(v_q)
+
+    motor_Pe_values.append(ipmsm.get_Pe())
 
     # Store the control signals
     i_d_ref_values.append(ipmsm.i_d_ref)
@@ -154,6 +158,7 @@ axs[1].grid(True)
 # Current plots
 axs[2].plot(time_values, i_d_values, label='i_d')
 axs[2].plot(time_values, i_q_values, label='i_q')
+axs[2].plot(time_values, motor_Pe_values, label='motor Pe')
 axs[2].set_ylabel('Currents (pu)')
 axs[2].legend()
 axs[2].grid(True)

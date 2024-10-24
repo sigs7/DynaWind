@@ -12,7 +12,6 @@ from tops.dyn_models.IPMSM_drives import *
 # All dyn med nettet skjer gjennom "GridSideConverter" klassen
 
 
-
 if __name__ == '__main__':
 
     # Load model
@@ -41,8 +40,6 @@ if __name__ == '__main__':
     # Run simulation
     while t < t_end:
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
-
-
 
         if t > 1:
             ps.vsc1['VSC_PQ'].set_input('p_ref', 0.8)

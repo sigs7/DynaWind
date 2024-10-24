@@ -135,7 +135,7 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         self.i_q = 0.5
         self.speed = self.primemover.speed
 
-        # self.speed_measured = self.speed
+        self.speed_measured = self.speed
 
         # Initialize PI controllers for i_d and i_q
         self.pi_controller_id = PIController_LAH(kp=1.27, ti=0.14)
@@ -371,7 +371,7 @@ class GridSideConverter(DAEModel):
 
     """
 
-    def __init__(self, params : dict, ipmsm : IPMSM, vsc_params : dict, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.bus_idx = np.array(np.zeros(self.n_units), dtype=[(key, int) for key in self.bus_ref_spec().keys()])
@@ -380,19 +380,17 @@ class GridSideConverter(DAEModel):
         # self.pref = IPMSM.get_Pe()              # Active power reference will come from the IPMSM
         # self.qref = 0                           # Reactive power reference can/should come from grid side
 
-        self.vdc = 1.0
-        self.vdc_ref = self.vdc
+        # self.vdc = 1.0
+        # self.vdc_ref = self.vdc
 
-        self.vdc_controller = PIController_LAH(kp=0.3, ti=0.003)
-
-        self.par = params
+        # self.vdc_controller = PIController_LAH(kp=0.3, ti=0.003)
 
     # region Definitions
 
     def init_from_load_flow(self, x_0, v_0, S):
         X = self.local_view(x_0)
 
-        self._input_values['p_ref'] = self.par['p_ref']       # NESCESERRY
+        self._input_values['p_ref'] = self.par['p_ref']       # unescassary?
         self._input_values['q_ref'] = self.par['q_ref']
 
         vg = v_0[self.bus_idx_red['terminal']]
@@ -401,15 +399,15 @@ class GridSideConverter(DAEModel):
         X['i_d'] = self.par['p_ref']/abs(vg)
         X['i_q'] = self.par['q_ref']/abs(vg)
         X['x_pll'] = 0
-        X["vdc"] = 1.0
+        # X["vdc"] = 1.0
         
     def state_derivatives(self, dx, x, v):
         dX = self.local_view(dx)
         X = self.local_view(x)
         par = self.par
 
-        self.pref = IPMSM.get_Pe() - self.vdc_controller.compute((self.vdc_ref - X["vdc"]))*X["vdc"]
-        self.qref = 0.0     # Should be updated from grid side command
+        # self.pref = IPMSM.get_Pe() - self.vdc_controller.compute((self.vdc_ref - X["vdc"]))*X["vdc"]
+        # self.qref = 0.0     # Should be updated from grid side command
 
         i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.pref * self.v_d(x,v) - self.qref * self.v_q(x,v))
         i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.pref * self.v_q(x,v) + self.qref * self.v_d(x,v))
@@ -422,7 +420,7 @@ class GridSideConverter(DAEModel):
         dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
         dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
         dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
-        dX["vdc"][:] = (self.pref - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
+        # dX["vdc"][:] = (self.pref - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
         #dX['angle'][:] = 0
         return    
 
