@@ -70,15 +70,15 @@ simulation_time = 30  # Total simulation time
 while t < simulation_time:
     # Print the percentage of simulation completed
     if int(t / dt) % int(simulation_time / 100 / dt) == 0:
-        print(f"\rSimulation {t / simulation_time * 100:.2f}% complete", end='')
+        print(f"\rSimulation {int(t / simulation_time * 100)}% complete", end='')
     # Update the states
     if t > 5 and event_flag1:
         ipmsm.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
-    if t > 20 and event_flag2:
-        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
-        event_flag2 = False
+    # if t > 20 and event_flag2:
+    #     ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
+    #     event_flag2 = False
 
     # Update the prime mover reference values gradually
 

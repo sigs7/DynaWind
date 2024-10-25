@@ -1,5 +1,5 @@
 [instance1][0][instance1] Initialise()
-[instance1][0][instance1] Parsing model description for variable registry: C:/Users/larsi/AppData/Local/Temp/tmpusfnc0py/resources/../modelDescription.xml
+[instance1][0][instance1] Parsing model description for variable registry: C:/Users/larsi/AppData/Local/Temp/tmp92mf2ijq/resources/../modelDescription.xml
 [instance1][0][instance1] Added real value to registry: testNr, 0 -> 1001.000000
 [instance1][0][instance1] Added real value to registry: timeStart, 1 -> 0.000000
 [instance1][0][instance1] Added real value to registry: Mode, 2 -> 1.000000
@@ -11,16 +11,6 @@
 name       : FAST FMU
 description: OpenFAST wind turbine model as FMU for use in power system analysis
 start_time : 0.000000
-end_time   : 99999.000000
+end_time   : 3600.000000
 time_step  : 0.010000
 
-[instance1][3][] Title
-
-Message
-
------- Debug information ------
-EXCEPTION_TYPE
-   thrown at C:\\FAST\\openfast_fmu_manualclone\\components-master-OpenFAST_FMU\\OpenFAST_FMU\\fast_cosim_object_PSA.f90:291
-thrown exception ignored at C:\\FAST\\openfast_fmu_manualclone\\components-master-OpenFAST_FMU\\OpenFAST_FMU\\fast_cosim_object_PSA.f90:298
-    exception: EXCEPTION_TYPE - Title
-   caught at :-1

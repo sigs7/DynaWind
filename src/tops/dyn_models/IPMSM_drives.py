@@ -36,8 +36,8 @@ class PrimeMover:
         else:
             self.Tpm = 1e-1
 
-        self.torque = params["torque_0"] if "torque_0" in params else 0.5
-        self.speed = params["speed_0"] if "speed_0" in params else 0.5
+        self.torque = params["torque_0"] if "torque_0" in params else 0.6
+        self.speed = params["speed_0"] if "speed_0" in params else 0.6
         self.torque_ref = self.torque
         self.speed_ref = self.speed
         
@@ -49,7 +49,7 @@ class PrimeMover:
     def update_values(self, dt):
         # Apply first-order filter to torque and speed
         self.torque += (1 / self.Tpm) * (self.torque_ref - self.torque) * dt
-        self.speed += (1 / self.Tpm) * (self.speed_ref - self.speed) * dt
+
 
     def get_values(self):
         self.update_values()
@@ -92,8 +92,8 @@ class MachineSideConverter:
         self.vq += (1/self.T) * (vq_ctrl - self.vq) * dt
 
         # Limit the voltages
-        self.vd = self.clamp_value(self.vd, 5)
-        self.vq = self.clamp_value(self.vq, 5)
+        self.vd = self.clamp_value(self.vd, 2)
+        self.vq = self.clamp_value(self.vq, 2)
 
 
     def get_voltages(self):
@@ -240,16 +240,16 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         # I_d current control
         Kd = error_id*self.pi_controller_id.kp
         Ti_d = Kd/self.pi_controller_id.ti
-        Ti_d = self.clamp_value(Ti_d, 5)
+        Ti_d = self.clamp_value(Ti_d, 2)
         v_d_ctrl = v_dII + Kd + Ti_d
-        v_d_ctrl = self.clamp_value(v_d_ctrl, 3)
+        v_d_ctrl = self.clamp_value(v_d_ctrl, 2)
 
         # I_q current control
         Kq = error_iq*self.pi_controller_iq.kp
         Ti_q = Kq/self.pi_controller_iq.ti
-        Ti_q = self.clamp_value(Ti_q, 5)
+        Ti_q = self.clamp_value(Ti_q, 2)
         v_q_ctrl = v_qII + Kq + Ti_q
-        v_q_ctrl = self.clamp_value(v_q_ctrl, 3)
+        v_q_ctrl = self.clamp_value(v_q_ctrl, 2)
 
         # Input voltage control signal to converter and update the voltages
         self.set_converter_voltages(v_d_ctrl, v_q_ctrl, dt)
@@ -274,8 +274,8 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         dX = self.derivatives()
 
         # Update the states using Euler integration
-        self.speed += dX["speed"] * dt
         self.primemover.speed += dX["speed"] * dt
+        self.speed += dX["speed"] * dt
         self.i_d += dX["i_d"] * dt
         self.i_q += dX["i_q"] * dt
 
@@ -313,7 +313,10 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
 
     def get_Te(self):
         p = self.params
-        return p["Psi_m"]*self.i_q - (p["x_q"]-p["x_d"])*self.i_d*self.i_q
+        psi_q = self.i_q*p["x_q"]
+        psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+
+        return psi_d*self.i_q - psi_q*self.i_d
 
     def get_vd(self):
         return self.converter.vd

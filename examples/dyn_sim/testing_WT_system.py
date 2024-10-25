@@ -59,9 +59,10 @@ if __name__ == '__main__':
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
     t_end = 45
+
     x_0 = ps.x_0.copy()
 
-    dt = 5e-3
+    dt = 1e-4
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=dt)
@@ -106,12 +107,14 @@ if __name__ == '__main__':
         res['gen_speed'].append(ps.gen['GEN'].speed(x, v).copy())
 
         res['ipmsm_speed'].append(ipmsm.speed)
-        res['ipmsm_torque'].append(ipmsm.torque)
+        res['ipmsm_torque'].append(ipmsm.get_Te())
+        res['speed_ref'].append(ipmsm.primemover.speed_ref)
+        res['speed_error'].append(-(ipmsm.primemover.speed_ref - ipmsm.primemover.speed))
         res['ipmsm_i_d'].append(ipmsm.i_d)
         res['ipmsm_i_q'].append(ipmsm.i_q)
 
-        res['primemover_speed'].append(ipmsm.primemover_speed)
-        res['primemover_torque'].append(ipmsm.primemover_torque)
+        res['primemover_speed'].append(ipmsm.primemover.speed)
+        res['primemover_torque'].append(ipmsm.primemover.torque)
 
         res['electrical_power'].append(ipmsm.get_Pe())
         res['mechanical_power'].append(ipmsm.get_Pm())
@@ -126,22 +129,49 @@ if __name__ == '__main__':
         res["WT i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v).copy()))
 
 
-
-
-        # res["VSC_Id"].append(ps.vsc["VSC_PQ"].I_d(x, v).copy())
-        # res["VSC_Iq"].append(ps.vsc["VSC_PQ"].I_q(x, v).copy())
-
     print('\n Simulation completed in {:.2f} seconds.'.format(time.time() - t_0))
 
-    plt.figure()
-    plt.plot(res['t'], res['gen_speed'], label = "Generator speed")
-    plt.xlabel('Time [s]')
-    plt.ylabel('Gen. speed TOPS')
-    plt.legend(loc='upper right')
-    # plt.show()
+    # Plot the results
+    fig, axs = plt.subplots(5, 1, figsize=(15, 20), sharex=True)
 
+    # Mechanical results
+    axs[0].plot(res['t'], res['ipmsm_speed'], label='IPMSM Speed')
+    axs[0].plot(res['t'], res['primemover_speed'], label='Prime Mover Speed')
+    axs[0].plot(res['t'], res['speed_ref'], label='Speed Reference', linestyle='--')
+    axs[0].set_ylabel('Speed (pu)')
+    axs[0].legend()
+    axs[0].grid(True)
 
+    axs[1].plot(res['t'], res['ipmsm_torque'], label='IPMSM Torque')
+    axs[1].plot(res['t'], res['primemover_torque'], label='Prime Mover Torque')
+    axs[1].plot(res['t'], res['speed_error'], label='Speed Error', linestyle='--')
+    axs[1].set_ylabel('Torque (pu)')
+    axs[1].legend()
+    axs[1].grid(True)
 
-    
+    # Electrical results
+    axs[2].plot(res['t'], res['ipmsm_i_d'], label='i_d')
+    axs[2].plot(res['t'], res['ipmsm_i_q'], label='i_q')
+    axs[2].set_ylabel('Current (pu)')
+    axs[2].legend()
+    axs[2].grid(True)
 
-    plt.show()
+    axs[3].plot(res['t'], res['electrical_power'], label='Electrical Power')
+    axs[3].plot(res['t'], res['mechanical_power'], label='Mechanical Power')
+    axs[3].set_ylabel('Power (pu)')
+    axs[3].legend()
+    axs[3].grid(True)
+
+    # VSC results
+    axs[4].plot(res['t'], res['VSC_p_e'], label='VSC P_e')
+    axs[4].plot(res['t'], res['VSC_p_ref'], label='VSC P_ref')
+    axs[4].plot(res['t'], res['VSC_q'], label='VSC Q')
+    axs[4].plot(res['t'], res['VSC_q_ref'], label='VSC Q_ref')
+    axs[4].plot(res['t'], res["WT i_inj"], label='WT i_inj')
+    axs[4].set_ylabel('VSC (pu)')
+    axs[4].legend()
+    axs[4].grid(True)
+
+    plt.xlabel('Time (s)')
+    plt.tight_layout()
+    plt.savefig("WT_system_test.png")

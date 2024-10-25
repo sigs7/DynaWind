@@ -19,13 +19,14 @@ def simulate_custom_input(show_plot=True):
     # define the model name and simulation parameters
     fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
     
-    #debugging fmu
-    # fmu_filename = 'CoupledClutches.fmu'
-    start_time = 0.0
-    stop_time = 1.33
-    step_size = 0.01
 
-    # validate_fmu(fmu_filename)
+    start_time = 0.0
+    stop_time = 5
+    step_size = 0.01
+    
+    # traditional stepsize 0.025
+
+
     # read the model description
     model_description = read_model_description(fmu_filename)
 
@@ -47,7 +48,7 @@ def simulate_custom_input(show_plot=True):
     vr_output4 = vrs['GenSpeed']
 
 
-    vrs['testNr'] = 1001
+    vrs['testNr'] = 1002
     vrs['timeStart'] = 0.0
     vrs['Mode'] = 1.0
     vrs['HSShftV'] = 0.0
@@ -58,16 +59,6 @@ def simulate_custom_input(show_plot=True):
     # Print the value references to verify them
     for name, vr in vrs.items():
         print(f"Variable: {name}, Value Reference: {vr}")
-
-    # Need to define certain aspects of the simulation:
-    # testNr 0 -> 1001
-    # timeStart 1 -> 0.0
-    # Mode 2 -> 1.0
-    # HSShftV 3 -> 0.0
-    # GenPwr 4 -> 0.0
-    # ElecPwrCom 5 -> 0.0
-
-    # setReal in SIMULINK are only ( 3 : 7.55 , 4 : 0.000 , 5 : 20_000)
 
 
     # extract the FMU
@@ -95,7 +86,6 @@ def simulate_custom_input(show_plot=True):
         fmu.setReal([4],[0.0])
         fmu.setReal([5],[20_000])
 
-
         # Perform one step
         try:
             # print(f"Performing doStep at time {time}")
@@ -110,7 +100,7 @@ def simulate_custom_input(show_plot=True):
             output2 = fmu.getReal([vr_output2])[0]
             output3 = fmu.getReal([vr_output3])[0]
             output4 = fmu.getReal([vr_output4])[0]
-            print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
+            # print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
         except Exception as e:
             print(f"Error getting output at time {time}: {e}")
             break
@@ -162,3 +152,4 @@ def simulate_custom_input(show_plot=True):
 
 if __name__ == '__main__':
     simulate_custom_input(show_plot=True)
+
