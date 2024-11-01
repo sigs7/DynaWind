@@ -5,6 +5,43 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tops.dyn_models.utils import DAEModel
 
+def rkf45(f, y0, t0, dt):
+    c = [0, 1/4, 3/8, 12/13, 1, 1/2]
+    a = [
+        [],
+        [1/4],
+        [3/32, 9/32],
+        [1932/2197, -7200/2197, 7296/2197],
+        [439/216, -8, 3680/513, -845/4104],
+        [-8/27, 2, -3544/2565, 1859/4104, -11/40]
+    ]
+    b = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55]
+    b_star = [25/216, 0, 1408/2565, 2197/4104, -1/5, 0]
+
+    k = [f(t0, y0)]
+    for i in range(1, 6):
+        yi = y0 + dt * sum(a[i][j] * k[j] for j in range(i))
+        k.append(f(t0 + c[i] * dt, yi))
+
+    y_new = y0 + dt * sum(b[i] * k[i] for i in range(6))
+    y_star = y0 + dt * sum(b_star[i] * k[i] for i in range(6))
+    error = np.linalg.norm(y_new - y_star)
+    return y_new, error
+
+# Adaptive timestep control
+def adaptive_rkf45(f, y0, t0, dt, tol=1e-6):
+    safety_factor = 0.9
+    max_factor = 5.0
+    min_factor = 0.2
+
+    while True:
+        y_new, error = rkf45(f, y0, t0, dt)
+        if error < tol:
+            break
+        dt = max(min_factor, min(max_factor, safety_factor * (tol / error)**0.25)) * dt
+
+    return y_new, dt
+
 # region PI Controller class
 class PIController_LAH:
     def __init__(self, kp, ti):
@@ -138,9 +175,15 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         # self.speed_measured = self.speed
 
         # Initialize PI controllers for i_d and i_q
-        self.pi_controller_id = PIController_LAH(kp=1.27, ti=0.14)
-        self.pi_controller_iq = PIController_LAH(kp=1.27, ti=0.14)
-        self.pi_controller_speed = PIController_LAH(kp=56, ti=0.04)
+        # self.pi_controller_id = PIController_LAH(kp=1.27, ti=0.14)
+        # self.pi_controller_iq = PIController_LAH(kp=1.27, ti=0.14)
+        # self.pi_controller_speed = PIController_LAH(kp=56, ti=0.04)
+
+
+        # Initialize PI controllers for i_d, i_q, and speed with parameters adjusted for a larger timestep
+        self.pi_controller_id = PIController_LAH(kp=0.5, ti=0.2)
+        self.pi_controller_iq = PIController_LAH(kp=0.5, ti=0.2)
+        self.pi_controller_speed = PIController_LAH(kp=20, ti=0.1)
 
         # Desired currents and speed
         self.i_d_ref = 0.0          # Må kanskje endres senere
@@ -173,6 +216,8 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
 
                     % Mechanical
                     T_m = 0.8; [s] mechanical time constant
+
+        
         
         """
 
@@ -182,8 +227,13 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         psi_q = self.i_q*p["x_q"]
         psi_d = self.i_d*p["x_d"] + p["Psi_m"]
 
+        # Motor convention
         dX["i_d"] = (self.converter.vd - p["rs"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
         dX["i_q"] = (self.converter.vq - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_d"])
+
+        # Generator convention (care for direction of the currents)
+        # dX["i_d"] = (-self.converter.vd + p["rs"]*self.i_d - psi_q*self.speed) * (p["w_n"]/p["x_d"])
+        # dX["i_q"] = (-self.converter.vq + p["rs"]*self.i_q + psi_d*self.speed) * (p["w_n"]/p["x_d"])
 
         Te = psi_d*self.i_q - psi_q*self.i_d
 
@@ -256,7 +306,7 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
     
     # endregion
 
-    def update_states(self, t, dt):
+    def update_states(self, t, dt, tol=1e-6):
 
         # Update the reference values of the prime mover, this is because of any changes in the reference values (ramping)
         self.set_primemover_ramp_reference_values(current_time=t)
@@ -270,14 +320,99 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         # Update reference voltages using PI controllers
         self.update_current_control(dt)
 
+        # def derivatives_wrapper(t, y):
+        #         self.primemover.speed, self.i_d, self.i_q = y
+        #         dX = self.derivatives()
+        #         return np.array([dX["speed"], dX["i_d"], dX["i_q"]])
+
+        # y0 = np.array([self.primemover.speed, self.i_d, self.i_q])
+        # y_new, dt_new = adaptive_rkf45(derivatives_wrapper, y0, t, dt, tol)
+
+        # # Update the states
+        # self.primemover.speed, self.i_d, self.i_q = y_new
+        # self.speed = self.primemover.speed
+
+        # return dt_new
+
         # Calculate the derivatives
         dX = self.derivatives()
 
-        # Update the states using Euler integration
+        # # Update the states using Euler integration
         self.primemover.speed += dX["speed"] * dt
         self.speed += dX["speed"] * dt
         self.i_d += dX["i_d"] * dt
         self.i_q += dX["i_q"] * dt
+
+        # region RKF45
+        # Calculate the derivatives using adaptive RKF45 method
+        # Define the Runge-Kutta-Fehlberg method (RKF45)
+
+
+        # region Traapezoidal rule
+        # # Update the states using the trapezoidal rule
+        # dX1 = self.derivatives()
+        
+        # # Predict the next state
+        # temp_speed = self.primemover.speed + dX1["speed"] * dt
+        # temp_i_d = self.i_d + dX1["i_d"] * dt
+        # temp_i_q = self.i_q + dX1["i_q"] * dt
+        
+        # # Calculate the derivatives at the predicted next state
+        # self.primemover.speed = temp_speed
+        # self.i_d = temp_i_d
+        # self.i_q = temp_i_q
+        # dX2 = self.derivatives()
+        
+        # # Correct the state using the average of the derivatives
+        # self.primemover.speed += 0.5 * (dX1["speed"] + dX2["speed"]) * dt
+        # self.speed = self.primemover.speed
+        # self.i_d += 0.5 * (dX1["i_d"] + dX2["i_d"]) * dt
+        # self.i_q += 0.5 * (dX1["i_q"] + dX2["i_q"]) * dt
+        # endregion
+
+        # region Runge-Kutta
+        # # Update the states using Runge-Kutta 4th order method
+        # Runge-Kutta 4th order method
+        # k1 = self.derivatives()
+        # self.i_d += k1["i_d"] * dt / 2
+        # self.i_q += k1["i_q"] * dt / 2
+        # self.speed += k1["speed"] * dt / 2
+
+        # k2 = self.derivatives()
+        # self.i_d += (k2["i_d"] - k1["i_d"]) * dt / 2
+        # self.i_q += (k2["i_q"] - k1["i_q"]) * dt / 2
+        # self.speed += (k2["speed"] - k1["speed"]) * dt / 2
+
+        # k3 = self.derivatives()
+        # self.i_d += (k3["i_d"] - k2["i_d"]) * dt
+        # self.i_q += (k3["i_q"] - k2["i_q"]) * dt
+        # self.speed += (k3["speed"] - k2["speed"]) * dt
+
+        # k4 = self.derivatives()
+        # self.i_d += (k4["i_d"] - k3["i_d"]) * dt / 6
+        # self.i_q += (k4["i_q"] - k3["i_q"]) * dt / 6
+        # self.speed += (k4["speed"] - k3["speed"]) * dt / 6
+        # endregion
+
+        # region Modified Euler
+        # Update the states using Modified Euler method
+        # k1 = self.derivatives()
+        # temp_i_d = self.i_d + k1["i_d"] * dt
+        # temp_i_q = self.i_q + k1["i_q"] * dt
+        # temp_speed = self.speed + k1["speed"] * dt
+
+        # # Temporarily update the states
+        # self.i_d = temp_i_d
+        # self.i_q = temp_i_q
+        # self.speed = temp_speed
+
+        # k2 = self.derivatives()
+
+        # # Final update of the states
+        # self.i_d += 0.5 * (k1["i_d"] + k2["i_d"]) * dt
+        # self.i_q += 0.5 * (k1["i_q"] + k2["i_q"]) * dt
+        # self.speed += 0.5 * (k1["speed"] + k2["speed"]) * dt
+        # endregion
 
     def set_converter_voltages(self, v_d_ctrl, v_q_ctrl, dt):
         self.converter.set_reference_voltages(v_d_ctrl, v_q_ctrl)

@@ -58,31 +58,46 @@ error_id_values = []
 
 event_flag1 = True
 event_flag2 = True
+event_flag3 = True
 
-t = 0
+
 
 # Simulation parameters
-dt = 1e-4  # Time step 
-simulation_time = 30  # Total simulation time
+t = 0
+dt = 1e-4  # Time step
+tol = 1e-10  # Tolerance
+simulation_time = 5  # Total simulation time
 
+unique_timesteps = set()
 
 # Run the simulation
 while t < simulation_time:
     # Print the percentage of simulation completed
     if int(t / dt) % int(simulation_time / 100 / dt) == 0:
         print(f"\rSimulation {int(t / simulation_time * 100)}% complete", end='')
+
+    ipmsm.update_states(t , dt, tol)
+
     # Update the states
-    if t > 5 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
+    if t > 2 and event_flag1:
+        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
-    # if t > 20 and event_flag2:
-    #     ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
-    #     event_flag2 = False
+    if t > 8 and event_flag2:
+        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
+        event_flag2 = False
 
-    # Update the prime mover reference values gradually
+    if t > 15 and event_flag3:
+        ipmsm.set_prime_mover_reference(speed_ref=0.9, torque_ref=1, ramp_time=10, dt=dt, current_time=t)
+        event_flag3 = False
 
-    ipmsm.update_states(t , dt)
+
+    if dt > 1e-4 and int(t / dt) % int(simulation_time / 10 / dt) == 0:
+        print("")
+        print(f"dt changed to {dt}")
+    
+    # Add the current timestep to the set
+    unique_timesteps.add(dt)
 
     t += dt
     # Get mechanical states
@@ -134,6 +149,8 @@ while t < simulation_time:
     error_iq_values.append(ipmsm.i_q_ref - i_q)
     error_id_values.append(ipmsm.i_d_ref - i_d)
 
+print("")
+print("Unique timesteps: ", len(unique_timesteps))
 print("")
 print("Plotting in progress...")
 # Plot the results of votlage and current

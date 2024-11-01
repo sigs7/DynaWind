@@ -58,7 +58,7 @@ if __name__ == '__main__':
     ps.init_dyn_sim()
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
-    t_end = 45
+    t_end = 3
 
     x_0 = ps.x_0.copy()
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Update the states
-        if t > 2 and event_flag1:
+        if t > 1 and event_flag1:
             ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.4, ramp_time=1, dt=dt, current_time=t)
             event_flag1 = False
 
@@ -88,8 +88,9 @@ if __name__ == '__main__':
             ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
             event_flag2 = False        
 
-        ipmsm.update_states(t=t, dt=dt)
+        ipmsm.update_states(t=t, dt=sol.dt)
         Pref = ipmsm.get_Pe()
+
         ps.vsc['GridSideConverter'].set_input('p_ref', Pref)
 
 

@@ -23,13 +23,13 @@ if __name__ == '__main__':
     ps.init_dyn_sim()
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
-    t_end = 15
+    t_end = 5
     x_0 = ps.x_0.copy()
 
-    dt = 5e-3
+    # dt = 
 
     # Solver
-    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, dt)
+    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step = 1e-4)
 
     # Initialize simulation
     t = 0
@@ -51,6 +51,8 @@ if __name__ == '__main__':
         x = sol.y
         v = sol.v
         t = sol.t
+
+        # print(sol.dt)
 
         dx = ps.ode_fun(0, ps.x_0)
 
