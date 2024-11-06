@@ -125,7 +125,7 @@ class MachineSideConverter:
 
     def update_voltages(self, vd_ctrl, vq_ctrl, dt):
         # Apply first-order filter to vd and vq
-        self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt        # Tsw = 2/3*fsw
+        self.vd += (1/self.T) * (vd_ctrl - self.vd) * dt        # Tsw = 2/3*fsw 
         self.vq += (1/self.T) * (vq_ctrl - self.vq) * dt
 
         # Limit the voltages
@@ -229,7 +229,7 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
 
         # Motor convention
         dX["i_d"] = (self.converter.vd - p["rs"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
-        dX["i_q"] = (self.converter.vq - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_d"])
+        dX["i_q"] = (self.converter.vq - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
 
         # Generator convention (care for direction of the currents)
         # dX["i_d"] = (-self.converter.vd + p["rs"]*self.i_d - psi_q*self.speed) * (p["w_n"]/p["x_d"])

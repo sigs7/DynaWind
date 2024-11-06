@@ -29,7 +29,7 @@ if __name__ == '__main__':
     # dt = 
 
     # Solver
-    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step = 1e-4)
+    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step = 7e-4)
 
     # Initialize simulation
     t = 0

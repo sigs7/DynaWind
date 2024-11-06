@@ -4,7 +4,7 @@ from tops.dyn_models.IPMSM_drives import *
 
 # Define parameters
 ipmsm_params = {
-    "rs": 0.03,
+    "rs": 0.015,
     "x_d": 0.4,
     "x_q": 0.4,
     "Psi_m": 0.9,
@@ -12,7 +12,7 @@ ipmsm_params = {
     "w_n" : 2*np.pi*50  # nominal rad
 }
 
-MSC_params = {"T_conv" : 1e-4,
+MSC_params = {"T_conv" : 1e-2,
               "vq_0" : 0.5,
               "vd_0" : 0.0
 }
@@ -64,9 +64,9 @@ event_flag3 = True
 
 # Simulation parameters
 t = 0
-dt = 1e-4  # Time step
+dt = 7e-4  # Time step
 tol = 1e-10  # Tolerance
-simulation_time = 5  # Total simulation time
+simulation_time = 25  # Total simulation time
 
 unique_timesteps = set()
 
@@ -80,15 +80,15 @@ while t < simulation_time:
 
     # Update the states
     if t > 2 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
+        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
         event_flag1 = False
 
     if t > 8 and event_flag2:
-        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.8, ramp_time=10, dt=dt, current_time=t)
+        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.6, ramp_time=10, dt=dt, current_time=t)
         event_flag2 = False
 
     if t > 15 and event_flag3:
-        ipmsm.set_prime_mover_reference(speed_ref=0.9, torque_ref=1, ramp_time=10, dt=dt, current_time=t)
+        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.7, ramp_time=10, dt=dt, current_time=t)
         event_flag3 = False
 
 

@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     x_0 = ps.x_0.copy()
 
-    dt = 1e-4
+    dt = 7e-4
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=dt)
