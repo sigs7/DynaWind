@@ -58,7 +58,7 @@ if __name__ == '__main__':
     ps.init_dyn_sim()
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
-    t_end = 3
+    t_end = 1
 
     x_0 = ps.x_0.copy()
 

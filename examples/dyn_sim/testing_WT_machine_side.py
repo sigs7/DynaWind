@@ -17,7 +17,7 @@ MSC_params = {"T_conv" : 1e-2,
               "vd_0" : 0.0
 }
 
-prime_mover_params = {"T_pm" : 1e-1,
+prime_mover_params = {"T_pm" : 5e-1,
                       "speed_0" : 0.5,
                       "torque_0" : 0.5
 }
@@ -64,8 +64,8 @@ event_flag3 = True
 
 # Simulation parameters
 t = 0
-dt = 7e-4  # Time step
-tol = 1e-10  # Tolerance
+dt = 1e-3  # Time step
+# tol = 1e-10  # Tolerance
 simulation_time = 25  # Total simulation time
 
 unique_timesteps = set()
@@ -76,25 +76,25 @@ while t < simulation_time:
     if int(t / dt) % int(simulation_time / 100 / dt) == 0:
         print(f"\rSimulation {int(t / simulation_time * 100)}% complete", end='')
 
-    ipmsm.update_states(t , dt, tol)
+    ipmsm.update_states(t , dt)
 
     # Update the states
-    if t > 2 and event_flag1:
-        ipmsm.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.5, ramp_time=1, dt=dt, current_time=t)
+    if t > 5 and event_flag1:
+        ipmsm.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.3, ramp_time=3, dt=dt, current_time=t)
         event_flag1 = False
 
-    if t > 8 and event_flag2:
-        ipmsm.set_prime_mover_reference(speed_ref=1, torque_ref=0.6, ramp_time=10, dt=dt, current_time=t)
+    if t > 15 and event_flag2:
+        ipmsm.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.7, ramp_time=3, dt=dt, current_time=t)
         event_flag2 = False
 
-    if t > 15 and event_flag3:
-        ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.7, ramp_time=10, dt=dt, current_time=t)
-        event_flag3 = False
+    # if t > 15 and event_flag3:
+    #     ipmsm.set_prime_mover_reference(speed_ref=0.7, torque_ref=0.7, ramp_time=10, dt=dt, current_time=t)
+    #     event_flag3 = False
 
 
-    if dt > 1e-4 and int(t / dt) % int(simulation_time / 10 / dt) == 0:
-        print("")
-        print(f"dt changed to {dt}")
+    # if dt > 1e-4 and int(t / dt) % int(simulation_time / 10 / dt) == 0:
+    #     print("")
+    #     print(f"dt changed to {dt}")
     
     # Add the current timestep to the set
     unique_timesteps.add(dt)

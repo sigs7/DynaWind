@@ -58,7 +58,7 @@ class VSC_PQ(DAEModel):
         par = self.par
 
         dp = self.p_ref(x,v) - self.p_e(x, v)
-        dq = -self.q_ref(x,v) + self.q_e(x, v)
+        dq = -self.q_ref(x,v) + self.q_e(x, v)          # Hvorfor minus her?
         i_d_ref = dp * par['k_p'] + X['x_p']
         i_q_ref = dq * par['k_q'] + X['x_q']
 
@@ -73,7 +73,7 @@ class VSC_PQ(DAEModel):
         dX['x_p'][:] = par['k_p'] / (par['T_p']) * dp
         dX['x_q'][:] = par['k_q'] / (par['T_q']) * dq
         dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
-        dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
+        dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)              
         #dX['angle'][:] = 0
         return
 

@@ -280,3 +280,291 @@ Completed CosimObject::doStep for step nr 0
 Completed fmi2DoStep for step nr 0
 Subsequent steps will not be output 
 Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmp68ur26vl/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmp68ur26vl/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmp68ur26vl/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmp5nv01v08/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmp5nv01v08/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmp5nv01v08/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmpagc7hfpl/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmpagc7hfpl/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmpagc7hfpl/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmp20mfuvqb/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmp20mfuvqb/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmp20mfuvqb/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmp46a_daq_/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmp46a_daq_/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmp46a_daq_/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate
+Entering fmi2Instantiate 
+Instantiating
+Redirecting cout here
+Redirecting cerr here
+Entering CosimFMU() 
+CosimFMU(): instance name: instance1, location: file:///C:/Users/larsi/AppData/Local/Temp/tmp561fp3e0/resources
+CosimFMU(): Current working directory is C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): Read directory C:/Workspace/FAST2PF from file C:/Users/larsi/AppData/Local/Temp/tmp561fp3e0/resources/wd.txt
+CosimFMU(): Directory path is empty or invalid, keeping current working directory C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH
+CosimFMU(): SetCurrentDirectory failed 
+CosimFMU(): Changed working directory to C:/Workspace/FAST2PF
+Logger: Opening log file 
+CosimFMU(): Initialised logger
+CosimFMU(): Fortran cosim object initialised
+Entering VariableRegistry.
+VariableRegistry: Parsing model description: C:/Users/larsi/AppData/Local/Temp/tmp561fp3e0/resources/../modelDescription.xml.
+VariableRegistry: Model description parsed.
+VariableRegistry: Parsing variable testNr, value reference: 0
+VariableRegistry: Parsing variable timeStart, value reference: 1
+VariableRegistry: Parsing variable Mode, value reference: 2
+VariableRegistry: Parsing variable HSShftV, value reference: 3
+VariableRegistry: Parsing variable GenPwr, value reference: 4
+VariableRegistry: Parsing variable ElecPwrCom, value reference: 5
+VariableRegistry: Parsing variable Time, value reference: 6
+VariableRegistry: Parsing variable HSShftTq, value reference: 7
+VariableRegistry: Parsing variable GenTq, value reference: 8
+VariableRegistry: Parsing variable Wind1VelX, value reference: 9
+VariableRegistry: Parsing variable RtVAvgxh, value reference: 10
+VariableRegistry: Parsing variable BldPitch1, value reference: 11
+VariableRegistry: Parsing variable NacYaw, value reference: 12
+VariableRegistry: Parsing variable GenSpeed, value reference: 13
+VariableRegistry: Parsing variable RotSpeed, value reference: 14
+VariableRegistry: Parsing variable LSSGagPxa, value reference: 15
+VariableRegistry: Parsing variable Azimuth, value reference: 16
+VariableRegistry: Parsing variable GenAccel, value reference: 17
+VariableRegistry: Parsing variable YawBrTAxp, value reference: 18
+VariableRegistry: Parsing variable YawBrTAyp, value reference: 19
+CosimFMU(): VariableRegistry initialised
+Done instantiating
+Entering SetupExperiment
+Entering EnterInitializationMode
+Entering ExitInitializationMode
+Entering fmi2DoStep for step nr 0
+Entering CosimObject::doStep for step nr 0
+Completed CosimObject::doStep for step nr 0
+Completed fmi2DoStep for step nr 0
+Subsequent steps will not be output 
+Entering fmi2Terminate

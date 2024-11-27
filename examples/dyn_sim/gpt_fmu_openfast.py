@@ -42,18 +42,18 @@ def simulate_custom_input(show_plot=True):
 
     # Is defined in SIMULINK as getReal(6-19)
     # get the value references for the variables we want to get/set
-    vr_output1 = vrs['GenPwr']  # Replace 'Output1' with the actual variable name
-    vr_output2 = vrs['GenTq']  # Replace 'Output2' with the actual variable name
-    vr_output3 = vrs['HSShftV']  # Replace 'Output3' with the actual variable name
-    vr_output4 = vrs['GenSpeed']
+    generator_power = vrs['GenPwr']  # Replace 'Output1' with the actual variable name
+    generator_torque = vrs['GenTq']  # Replace 'Output2' with the actual variable name
+    high_speed_shaft = vrs['HSShftV']  # Replace 'Output3' with the actual variable name
+    generator_speed = vrs['GenSpeed']
 
 
     vrs['testNr'] = 1002
     vrs['timeStart'] = 0.0
     vrs['Mode'] = 1.0
-    vrs['HSShftV'] = 0.0
-    vrs['GenPwr'] = 0.0
-    vrs['ElecPwrCom'] = 0.0
+    # vrs['HSShftV'] = 0.0
+    # vrs['GenPwr'] = 0.0
+    # vrs['ElecPwrCom'] = 0.0
 
 
     # Print the value references to verify them
@@ -82,9 +82,9 @@ def simulate_custom_input(show_plot=True):
     # Simulation loop
     while time < stop_time:
         # Set initial values for the variables
-        fmu.setReal([3],[7.55])
-        fmu.setReal([4],[0.0])
-        fmu.setReal([5],[20_000])
+        # fmu.setReal([3],[7.55])
+        # fmu.setReal([4],[0.0])
+        # fmu.setReal([5],[20_000])
 
         # Perform one step
         try:
@@ -96,10 +96,10 @@ def simulate_custom_input(show_plot=True):
 
         # Get the outputs
         try:
-            output1 = fmu.getReal([vr_output1])[0]
-            output2 = fmu.getReal([vr_output2])[0]
-            output3 = fmu.getReal([vr_output3])[0]
-            output4 = fmu.getReal([vr_output4])[0]
+            output1 = fmu.getReal([generator_power])[0]
+            output2 = fmu.getReal([generator_torque])[0]
+            output3 = fmu.getReal([high_speed_shaft])[0]
+            output4 = fmu.getReal([generator_speed])[0]
             # print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
         except Exception as e:
             print(f"Error getting output at time {time}: {e}")
@@ -133,7 +133,7 @@ def simulate_custom_input(show_plot=True):
     ]))
 
     # Save the results
-    np.savetxt('results.csv', result, delimiter=',', header='time,output1,output2,output3,output4', comments='')
+    np.savetxt('results.csv', result, delimiter= ',', header = 'time, Generator_power, Generator_torque, High_speed_shaft, Generator_speed', comments='')
 
     if show_plot:
         times = result['time']
@@ -141,12 +141,26 @@ def simulate_custom_input(show_plot=True):
         outputs2 = result['output2']
         outputs3 = result['output3']
         outputs4 = result['output4']
-        plt.plot(times, outputs1, label='Output1')
-        plt.plot(times, outputs2, label='Output2')
-        plt.plot(times, outputs3, label='Output3')
-        plt.plot(times, outputs4, label='Output4')
-        plt.xlabel('Time (s)')
-        plt.legend()
+        fig, axs = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+    
+        axs[0].plot(times, outputs1, label='Generator_power')
+        axs[0].set_ylabel('Generator_power')
+        axs[0].legend()
+        
+        axs[1].plot(times, outputs2, label='Generator_torque')
+        axs[1].set_ylabel('Generator_torque')
+        axs[1].legend()
+        
+        axs[2].plot(times, outputs3, label='High_speed_shaft')
+        axs[2].set_ylabel('High_speed_shaft')
+        axs[2].legend()
+        
+        axs[3].plot(times, outputs4, label='Generator_speed')
+        axs[3].set_xlabel('Time (s)')
+        axs[3].set_ylabel('Generator_speed')
+        axs[3].legend()
+        
+        plt.tight_layout()
         plt.show()
 
 

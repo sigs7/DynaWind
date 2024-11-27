@@ -284,21 +284,15 @@ class IPMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         error_iq = self.i_q_ref - self.i_q
 
         # Compute decoupled voltage control signals
-        v_dII = self.i_q * p["x_q"] * self.speed
+        v_dII = -self.i_q * p["x_q"] * self.speed
         v_qII = self.i_d * p["x_d"] + p["Psi_m"] * self.speed
 
         # I_d current control
-        Kd = error_id*self.pi_controller_id.kp
-        Ti_d = Kd/self.pi_controller_id.ti
-        Ti_d = self.clamp_value(Ti_d, 2)
-        v_d_ctrl = v_dII + Kd + Ti_d
+        v_d_ctrl = v_dII + self.pi_controller_id.compute(error_id, dt)
         v_d_ctrl = self.clamp_value(v_d_ctrl, 2)
-
+        
         # I_q current control
-        Kq = error_iq*self.pi_controller_iq.kp
-        Ti_q = Kq/self.pi_controller_iq.ti
-        Ti_q = self.clamp_value(Ti_q, 2)
-        v_q_ctrl = v_qII + Kq + Ti_q
+        v_q_ctrl = v_qII + self.pi_controller_iq.compute(error_iq, dt)
         v_q_ctrl = self.clamp_value(v_q_ctrl, 2)
 
         # Input voltage control signal to converter and update the voltages
