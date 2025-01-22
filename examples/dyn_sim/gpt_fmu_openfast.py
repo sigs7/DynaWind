@@ -21,7 +21,7 @@ def simulate_custom_input(show_plot=True):
     
 
     start_time = 0.0
-    stop_time = 5
+    stop_time = 3600
     step_size = 0.01
     
     # traditional stepsize 0.025
@@ -42,10 +42,11 @@ def simulate_custom_input(show_plot=True):
 
     # Is defined in SIMULINK as getReal(6-19)
     # get the value references for the variables we want to get/set
-    generator_power = vrs['GenPwr']  # Replace 'Output1' with the actual variable name
+    generator_accel = vrs['GenAccel']  # Replace 'Output1' with the actual variable name
     generator_torque = vrs['GenTq']  # Replace 'Output2' with the actual variable name
-    high_speed_shaft = vrs['HSShftV']  # Replace 'Output3' with the actual variable name
+    RotSpeed = vrs['RotSpeed']  # Replace 'Output3' with the actual variable name
     generator_speed = vrs['GenSpeed']
+    Wind1VelX = vrs["Wind1VelX"]
 
 
     vrs['testNr'] = 1002
@@ -90,23 +91,28 @@ def simulate_custom_input(show_plot=True):
         try:
             # print(f"Performing doStep at time {time}")
             fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
         except Exception as e:
             print(f"Error during doStep at time {time}: {e}")
             break
 
         # Get the outputs
         try:
-            output1 = fmu.getReal([generator_power])[0]
+            output1 = fmu.getReal([generator_accel])[0]
             output2 = fmu.getReal([generator_torque])[0]
-            output3 = fmu.getReal([high_speed_shaft])[0]
+            output3 = fmu.getReal([RotSpeed])[0]
             output4 = fmu.getReal([generator_speed])[0]
+            output5 = fmu.getReal([Wind1VelX])[0]
+
+            # output1 = output2 * np.pi() * output4 / 30
             # print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
         except Exception as e:
             print(f"Error getting output at time {time}: {e}")
             break
-
+        
+        
         # Append the results
-        rows.append((time, output1, output2, output3, output4))
+        rows.append((time, output1, output2, output3, output4, output5))
 
 
         # advance the time
@@ -129,11 +135,12 @@ def simulate_custom_input(show_plot=True):
         ('output1', np.float64),
         ('output2', np.float64),
         ('output3', np.float64),
-        ('output4', np.float64)
+        ('output4', np.float64),
+        ('output5', np.float64)
     ]))
 
     # Save the results
-    np.savetxt('results.csv', result, delimiter= ',', header = 'time, Generator_power, Generator_torque, High_speed_shaft, Generator_speed', comments='')
+    np.savetxt('results.csv', result, delimiter=',', header='time, Generator_power, Generator_torque, High_speed_shaft, Generator_speed, WindVelX', comments='')
 
     if show_plot:
         times = result['time']
@@ -141,28 +148,57 @@ def simulate_custom_input(show_plot=True):
         outputs2 = result['output2']
         outputs3 = result['output3']
         outputs4 = result['output4']
-        fig, axs = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+        outputs5 = result["output5"]
+
+        times = result['time']
+        outputs2 = result['output2']
+        outputs4 = result['output4']
+        
+        
+        # fig, axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
+        
+        
+        # axs[0].plot(times, outputs2, label='Generator_torque')
+        # axs[0].set_ylabel('Generator_torque')
+        # axs[0].legend()
+
+        # axs[1].plot(times, outputs4, label='Generator_speed')
+        # axs[1].set_xlabel('Time (s)')
+        # axs[1].set_ylabel('Generator_speed')
+        # axs[1].legend()
+
+        # axs[2].plot(times, outputs5, label='WindVelx')
+        # axs[2].set_xlabel('Time (s)')
+        # axs[2].set_ylabel('WindVelx')
+        # axs[2].legend()
+        
+        # plt.tight_layout()
+        # plt.show()
+        fig, axs = plt.subplots(5, 1, figsize=(10, 12), sharex=True)
     
-        axs[0].plot(times, outputs1, label='Generator_power')
-        axs[0].set_ylabel('Generator_power')
+        axs[0].plot(times, outputs1, label='Generator Acceleration', color='blue')
+        axs[0].set_ylabel('Gen Accel')
         axs[0].legend()
         
-        axs[1].plot(times, outputs2, label='Generator_torque')
-        axs[1].set_ylabel('Generator_torque')
+        axs[1].plot(times, outputs2, label='Generator Torque', color='green')
+        axs[1].set_ylabel('Gen Torque')
         axs[1].legend()
         
-        axs[2].plot(times, outputs3, label='High_speed_shaft')
-        axs[2].set_ylabel('High_speed_shaft')
+        axs[2].plot(times, outputs3, label='RotSpeed', color='red')
+        axs[2].set_ylabel('RotSpeed')
         axs[2].legend()
         
-        axs[3].plot(times, outputs4, label='Generator_speed')
-        axs[3].set_xlabel('Time (s)')
-        axs[3].set_ylabel('Generator_speed')
+        axs[3].plot(times, outputs4, label='Generator Speed', color='purple')
+        axs[3].set_ylabel('Gen Speed')
         axs[3].legend()
+        
+        axs[4].plot(times, outputs5, label='WindVelX', color='orange')
+        axs[4].set_xlabel('Time (s)')
+        axs[4].set_ylabel('WindVelX')
+        axs[4].legend()
         
         plt.tight_layout()
         plt.show()
-
 
 if __name__ == '__main__':
     simulate_custom_input(show_plot=True)

@@ -95,6 +95,12 @@ class VSC_PQ(DAEModel):
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
         return self.bus_idx_red['terminal'], self.i_inj(x, v) * i_n_r
+    
+    def set_pref(self, pref):
+        self.par["p_ref"] = pref
+
+    def set_qref(self, qref):
+        self.par["q_ref"] = qref
 
     # region Utility methods
     def i_inj(self, x, v):

@@ -15,11 +15,11 @@
   - Architecture: 64 bit
   - Precision: double
   - OpenMP: No
-  - Date: Aug 19 2024
-  - Time: 11:37:49
+  - Date: Oct 30 2024
+  - Time: 14:39:32
  Execution Info:
-  - Date: 11/27/2024
-  - Time: 10:00:08+0100
+  - Date: 01/22/2025
+  - Time: 09:39:55+0100
 
  OpenFAST input file heading:
      IEA 15 MW offshore reference model monopile configuration
@@ -58,18 +58,24 @@
  Running ServoDyn.
  Running ServoDyn Interface for Bladed Controllers (using GNU Fortran for Windows).
  Using legacy Bladed DLL interface.
+ initialising logging channels
+ calling Fill_CONTROL_vars
+ Fill_CONTROL_vars called
+ calling dll
+ dll called
+           0
+ C:\Users\larsi\Master\TOPS_LAH\TOPS_LAH/test1001/mainInput.SrvD
+ logging channels initialised
 
  FAST_InitializeAll:HydroDyn_Init:Waves_Init:VariousWaves_Init: The random number generator in use
  differs from the original code provided by NREL. This pRNG uses 33 seeds instead of the 2 in the
  HydroDyn input file.
 
+  *** ERROR RETURN FROM ROUTINE GFEXFO. IERR =           -1
+ ****************** Error! *************** 
+ Message: RefGenSpd in OpenFAST is missing from output list                                                                       
+ -----------------------------------------
   Time: 0 of 3600 seconds.
-                                                                                                  
-  Total Real Time:       9.461 seconds
-  Total CPU Time:        9.0938 seconds
-  Simulation CPU Time:   4.2656 seconds
-  Simulated Time:        5 seconds
-  Time Ratio (Sim/CPU):  1.1722
 
   OpenFAST completed.
 

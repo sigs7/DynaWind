@@ -5,7 +5,7 @@ import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
 from tops.dyn_models.vsc1 import VSC_PV
-from tops.dyn_models.IPMSM_drives import *
+from tops.dyn_models.pmsm import *
 
 
 # Må sjekke ut kordan ej ønsker å initialisere WT inn i "model"
@@ -23,13 +23,13 @@ if __name__ == '__main__':
     ps.init_dyn_sim()
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
-    t_end = 5
+    t_end = 20
     x_0 = ps.x_0.copy()
 
     # dt = 
 
     # Solver
-    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step = 7e-4)
+    sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step = 5e-3)
 
     # Initialize simulation
     t = 0
@@ -41,10 +41,10 @@ if __name__ == '__main__':
     while t < t_end:
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
-        if t > 1:
+        if t > 10:
             ps.vsc1['VSC_PQ'].set_input('p_ref', 0.8)
-        if t > 5:
-            ps.vsc1['VSC_PQ'].set_input('q_ref', 0.1)
+            ps.vsc1['VSC_PQ'].set_input('q_ref', 0.0)
+
 
         # Simulate next step
         result = sol.step()

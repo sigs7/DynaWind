@@ -318,6 +318,13 @@ class GridSideConverter(DAEModel):
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
         return self.bus_idx_red['terminal'], self.i_inj(x, v) * i_n_r
+    
+    def set_pref(self, Pref):
+        self.par['p_ref'] = Pref
+
+    def set_qref(self, Qref):
+        self.par['q_ref'] = Qref
+    
 
     # region Utility methods
     def i_inj(self, x, v):
