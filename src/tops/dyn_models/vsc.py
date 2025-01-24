@@ -319,11 +319,12 @@ class GridSideConverter(DAEModel):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
         return self.bus_idx_red['terminal'], self.i_inj(x, v) * i_n_r
     
-    def set_pref(self, Pref):
-        self.par['p_ref'] = Pref
+    
+    def set_pref(self, Pref, index):
+        self.par['p_ref'][index] = Pref
 
-    def set_qref(self, Qref):
-        self.par['q_ref'] = Qref
+    def set_qref(self, Qref, index):
+        self.par['q_ref'][index] = Qref
     
 
     # region Utility methods

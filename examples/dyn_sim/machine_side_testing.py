@@ -64,7 +64,7 @@ event_flag3 = True
 
 # Simulation parameters
 t = 0
-dt = 1e-3  # Time step
+dt = 4e-3  # Time step
 # tol = 1e-10  # Tolerance
 simulation_time = 25  # Total simulation time
 
