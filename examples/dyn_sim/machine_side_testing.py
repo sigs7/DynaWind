@@ -12,7 +12,7 @@ pmsm_params = {
     "w_n" : 2*np.pi*50  # nominal rad
 }
 
-MSC_params = {"T_conv" : 1e-2,
+MSC_params = {"T_conv" : 5e-1,
               "vq_0" : 0.5,
               "vd_0" : 0.0
 }
@@ -61,10 +61,10 @@ event_flag2 = True
 event_flag3 = True
 
 
-
 # Simulation parameters
 t = 0
-dt = 4e-3  # Time step
+# dt = 4e-3  # Time step
+dt = 0.025
 # tol = 1e-10  # Tolerance
 simulation_time = 25  # Total simulation time
 

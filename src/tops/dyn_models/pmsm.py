@@ -210,22 +210,15 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
                     T_m = 0.8; [s] mechanical time constant
 
         """
-
         dX = {}
         p = self.params
-        
         psi_q = self.i_q*p["x_q"]
         psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+        Te = psi_d*self.i_q - psi_q*self.i_d
 
         # Motor convention
         dX["i_d"] = (self.converter.vd - p["rs"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
         dX["i_q"] = (self.converter.vq - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
-
-        # Generator convention (care for direction of the currents)
-        # dX["i_d"] = (-self.converter.vd + p["rs"]*self.i_d - psi_q*self.speed) * (p["w_n"]/p["x_d"])
-        # dX["i_q"] = (-self.converter.vq + p["rs"]*self.i_q + psi_d*self.speed) * (p["w_n"]/p["x_d"])
-
-        Te = psi_d*self.i_q - psi_q*self.i_d
 
         # change in speed T_t - T_e
         dX["speed"] = 1/p["Tm"] * (self.primemover.torque - Te)
@@ -441,8 +434,21 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         return self.speed * self.primemover.torque
 
     # endregion
+    def get_pmsm_results(self):
+        return {
+            'speed': self.speed,
+            'i_d': self.i_d,
+            'i_q': self.i_q,
+            'vd': self.converter.vd,
+            'vq': self.converter.vq,
+            'Pe': self.get_Pe()
+        }
 
-
+    def store_pmsm_states(self, res, t):
+        pmsm_results = self.get_pmsm_results()
+        for key, value in pmsm_results.items():
+            res[key].append(value)
+        res['t'].append(t)
 
 
 

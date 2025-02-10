@@ -296,3 +296,8 @@ class GEN(DAEModel):
     #     dx['e_d_t'][:] = 1 / (self.par['T_q0_t']) * (-self.e_d_t(x, v) + self.i_q(x, v) * (self.par['X_q'] - self.par['X_q_t']))
     #     dx['e_q_st'][:] = 1 / (self.par['T_d0_st']) * (self.e_q_t(x, v) - self.e_q_st(x, v) - self.i_d(x, v) * (self.par['X_d_t'] - self.par['X_d_st']))
     #     dx['e_d_st'][:] = 1 / (self.par['T_q0_st']) * (self.e_d_t(x, v) - self.e_d_st(x, v) + self.i_q(x, v) * (self.par['X_q_t'] - self.par['X_q_st']))
+
+
+
+class GEN_2nd(DAEModel):
+    pass

@@ -11,7 +11,7 @@ importlib.reload(dps)
 import importlib
 
 from tops.dyn_models.pmsm import *
-from tops.dyn_models.vsc1 import VSC_PV
+# from tops.dyn_models.vsc1 import VSC_PV
 
 # Define parameters
 pmsm_params = {
@@ -37,19 +37,16 @@ prime_mover_params = {"T_pm" : 1e-1,
 pmsm1 = PMSM(pmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mover_params)         # Initiate the PMSM
 pmsm2 = PMSM(pmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mover_params)         # Initiate the PMSM
 
-
-
 if __name__ == '__main__':
-
     # Load model
-    import tops.ps_models.user_ps_models.k2a_vsc as model_data
+    # import tops.ps_models.user_ps_models.k2a_vsc as model_data
+    import tops.ps_models.n44 as model_data
     model = model_data.load()
 
     model["vsc"] = {"GridSideConverter": [
         ['name',   'bus', 'S_n',   "p_ref",   "q_ref",   'Cdc',   'k_p',    'k_q',  'T_p',  'T_q',     'k_pll',   'T_pll',    'T_i',    'i_max'],
-        ['WT1',    'B1',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
-        ['WT2',    'B1',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
-
+        ['WT1',    '3000',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
+        ['WT2',    '5100',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
     ]}
 
     # Power system model
@@ -58,8 +55,8 @@ if __name__ == '__main__':
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
     x_0 = ps.x_0.copy()
-    t_end = 25
-    dt = 4e-3
+    t_end = 10
+    dt = 5e-3
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=dt)
@@ -68,6 +65,7 @@ if __name__ == '__main__':
     t = 0
 
     res = defaultdict(list)
+    unique_timesteps = set()
     t_0 = time.time()
 
     event_flag1 = True
@@ -82,19 +80,19 @@ if __name__ == '__main__':
 
         # Update the states
         if t > 5 and event_flag1:
-            pmsm1.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.3, ramp_time=3, dt=dt, current_time=t)
+            pmsm1.set_prime_mover_reference(speed_ref=0.3, torque_ref=0.4, ramp_time=3, dt=dt, current_time=t)
             event_flag1 = False
 
         if t > 8 and event_flag3:
-            pmsm2.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.7, ramp_time=3, dt=dt, current_time=t)
+            pmsm2.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.8, ramp_time=3, dt=dt, current_time=t)
             event_flag3 = False
 
         if t > 12 and event_flag2:
-            pmsm1.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.7, ramp_time=3, dt=dt, current_time=t)
+            pmsm1.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.7, ramp_time=3, dt=dt, current_time=t)
             event_flag2 = False         
 
         if t > 12 and event_flag4:
-            pmsm1.set_prime_mover_reference(speed_ref=0.9, torque_ref=0.6, ramp_time=3, dt=dt, current_time=t)
+            pmsm2.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.9, ramp_time=3, dt=dt, current_time=t)
             event_flag2 = False 
 
         pmsm1.update_states(t=t, dt=sol.dt)
@@ -105,7 +103,6 @@ if __name__ == '__main__':
         Pref2 = pmsm2.get_Pe()
         ps.vsc["GridSideConverter"].set_pref(Pref2, 1)
 
-
         # Fra Jørgen og Nora
         # ps.vsc["VSC1"].set_input("P_setp", value, index)
 
@@ -115,11 +112,12 @@ if __name__ == '__main__':
         v = sol.v
         t = sol.t
 
+        unique_timesteps.add(sol.dt)
+
         dx = ps.ode_fun(0, ps.x_0)
 
         # Store result
         res['t'].append(t)
-
 
         ### Generator results ###
         # G2
@@ -176,8 +174,12 @@ if __name__ == '__main__':
         res["WT2 i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v)[1].copy()))
         res["WT2 p_ref"].append(ps.vsc["GridSideConverter"].p_ref(x, v)[1].copy())
 
+        # t += dt
+
+
 
     print('\n Simulation completed in {:.2f} seconds.'.format(time.time() - t_0))
+    print(f"Number of unique timesteps: {len(unique_timesteps)}")
 
     # Plot the mechanical results
     fig1, axs1 = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
@@ -291,3 +293,5 @@ if __name__ == '__main__':
     plt.savefig("Figures/TOPS_WT_system_response.png")
     # plt.show()
 
+    # plt.figure()
+    # plt.plot(res['t'], res['GenTrq'], label='Turbine torque')
