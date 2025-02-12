@@ -15,6 +15,9 @@ import importlib
 from tops.dyn_models.pmsm import *
 
 # FAST FMU imports
+from fmpy import read_model_description, extract
+from fmpy.fmi2 import FMU2Slave
+from fmpy.util import plot_result
 import tops.dyn_models.FAST_FMU as fast
 
 if __name__ == '__main__':
@@ -26,7 +29,7 @@ if __name__ == '__main__':
     ### SIMULATION SETTINGS ###
     t = 0
     dt = 5e-3
-    t_end = 30
+    t_end = 5
     ###
 
     ###  Initiate TOPS ###
@@ -73,7 +76,7 @@ if __name__ == '__main__':
 
 
     # Initiate the FAST FMU
-    fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU4CTRL_Export/fast.fmu'
+    fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
 
     fmu, vrs = fast.initiate_FAST_FMU(fmu_filename, start_time=t)
 
@@ -97,7 +100,7 @@ if __name__ == '__main__':
     event_flag4 = True
 
     ######### START SIMULATION #########
-
+    print("Starting simulation")
     while t < t_end:
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
@@ -127,7 +130,7 @@ if __name__ == '__main__':
         ps.vsc["GridSideConverter"].set_pref(Pref2, 1)
 
         # Set the torque input to the FMU
-        fmu.setReal([vrs['GenTrq']], [pmsm1.get_Te()])
+        fmu.setReal([vrs['GenPwr']], [pmsm1.get_Pe()])
         fmu.doStep(currentCommunicationPoint=t, communicationStepSize=dt)
         
         # fast.get_FMU_results(fmu, vrs, res, t)
@@ -197,6 +200,7 @@ if __name__ == '__main__':
         res["WT2 p_ref"].append(ps.vsc["GridSideConverter"].p_ref(x, v)[1].copy())
 
     
+
     # Plot the mechanical results
     fig1, axs1 = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
 
@@ -307,10 +311,47 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.savefig("Figures/COSIM_WT_system_response.png")
 
+    # FMU results
+    fig, axs = plt.subplots(4, 1, figsize=(15, 12), sharex=True)
+
+    axs[0].plot(res['t'], res['GenSpeed'], label='Generator Speed')
+    axs[0].set_ylabel('Speed (pu)')
+    axs[0].legend()
+    axs[0].grid(True)
+    axs[0].set_title('FMU Generator Speed vs Time')
+
+    axs[1].plot(res['t'], res['GenSpdOrTrq'], label='Generator Speed or Torque')
+    axs[1].set_ylabel('Speed or Torque (pu)')
+    axs[1].legend()
+    axs[1].grid(True)
+    axs[1].set_title('FMU Generator Speed or Torque vs Time')
+
+    axs[2].plot(res['t'], res['GenPwr'], label='Generator Power')
+    axs[2].set_ylabel('Power (pu)')
+    axs[2].legend()
+    axs[2].grid(True)
+    axs[2].set_title('FMU Generator Torque vs Time')
+
+    axs[3].plot(res['t'], res['RotSpeed'], label='Generator Power')
+    axs[3].set_xlabel('Time (s)')
+    axs[3].set_ylabel('Power (pu)')
+    axs[3].legend()
+    axs[3].grid(True)
+    axs[3].set_title('FMU Generator Power vs Time')
+
+    axs[3].plot(res['t'], res['HSShftTq'], label='High Speed Shaft Torque')
+    axs[3].set_xlabel('Time (s)')
+    axs[3].set_ylabel('Torque (pu)')
+    axs[3].legend()
+    axs[3].grid(True)
+    axs[3].set_title('FMU High Speed Shaft Torque vs Time')
+
+    plt.tight_layout()
+    plt.savefig("Figures/COSIM_FMU_response.png")
 
 
+    fast.terminate_FAST_FMU(fmu)
 
-    
 
 
 

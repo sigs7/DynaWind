@@ -1,6 +1,5 @@
-# GPT FMU aaah nr 2
-# hard copy of gptfmu2.py to adjust into OpenFAST FMU
 
+# hard copy of gptfmu2.py to adjust into OpenFAST FMU
 # Custom input - adapted from https://github.com/CATIA-Systems/FMPy/blob/main/fmpy/examples/custom_input.py
 
 """ This example demonstrates how to use the FMU.get*() and FMU.set*() functions
@@ -9,6 +8,7 @@
 from fmpy import read_model_description, extract
 from fmpy.fmi2 import FMU2Slave
 from fmpy.util import plot_result
+import os
 import numpy as np
 import shutil
 import matplotlib.pyplot as plt
@@ -16,16 +16,12 @@ import matplotlib.pyplot as plt
 def simulate_custom_input(show_plot=True):
 
     # define the model name and simulation parameters
-    fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU4CTRL_Export/fast.fmu'
+    # fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
+    fmu_filename = 'fast_debug.fmu'
     
-
     start_time = 0.0
-    stop_time = 3.0
-    # step_size = 0.025
-    step_size = 5e-3
-    
-    # traditional stepsize 0.025
-
+    stop_time = 20
+    step_size = 0.01
 
     # read the model description
     model_description = read_model_description(fmu_filename, validate=False)    #, validate=False
@@ -41,17 +37,21 @@ def simulate_custom_input(show_plot=True):
         print(f"Variable: {name}, Value Reference: {vr}")
 
     # extract the FMU
-    unzipdir = extract(fmu_filename)
+    unzipdir = extract(fmu_filename, os.path.abspath('openfast_debug_fmu'))
+
+    wd_file_path = 'openfast_debug_fmu/resources/wd.txt'
+    new_directory = 'C:/Users/larsi/Master/TOPS_LAH/TOPS_LAH'
+
+    # Write the new directory to the wd.txt file
+    with open(wd_file_path, 'w') as f:
+        f.write(new_directory)
+
+    print(f"Extracted to {unzipdir}")
 
     fmu = FMU2Slave(guid=model_description.guid,
                     unzipDirectory=unzipdir,
                     modelIdentifier=model_description.coSimulation.modelIdentifier,
                     instanceName='instance1')
-
-    # initialize
-    # fmu.setReal([0])=1002
-    # fmu.setReal([0],[1002])  # Set the testNr value
-    # fmu.setReal([vrs['testNr']], [1002])
 
     fmu.instantiate()
     fmu.setReal([vrs['testNr']], [1002])
@@ -62,55 +62,28 @@ def simulate_custom_input(show_plot=True):
     time = start_time
     rows = []  # list to record the results
 
+    print("Starting simulation")
     # Simulation loop
     while time < stop_time:
-        # Set initial values for the variables
-        # fmu.setReal([3],[7.55])
-        # fmu.setReal([4],[0.0])
-        # fmu.setReal([5],[20_000])
 
         # Perform one step
-        try:
-            # print(f"Performing doStep at time {time}")
-            fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
-            # status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
-            # if status != 0:
-            #     print(f"doStep returned status {status} at time {time}")
-            #     break
-
-        except Exception as e:
-            print(f"Error during doStep at time {time}: {e}")
-            break
+        print(f" \n \nPerforming step at time {time} \n \n")
+        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+        print(f"Step performed at time {time}")
 
         # Get the outputs
-        try:
-            GenTrq = fmu.getReal([vrs['GenTrq']])[0]
-            GenSpeed = fmu.getReal([vrs['GenSpeed']])[0]
-            RotSpeed = fmu.getReal([vrs['RotSpeed']])[0]
-            BlPitchCom = fmu.getReal([vrs['BlPitchCom']])[0]
-
-            # print("GenTrq: ", GenTrq)
-            # output1 = output2 * np.pi() * output4 / 30
-            # print(f"Outputs at time {time}: {output1}, {output2}, {output3}, {output4}")
-        except Exception as e:
-            print(f"Error getting output at time {time}: {e}")
-            break
-        
+        GenTrq = fmu.getReal([vrs['GenTq']])[0]
+        GenSpeed = fmu.getReal([vrs['GenSpeed']])[0]
+        RotSpeed = fmu.getReal([vrs['RotSpeed']])[0]
+        BlPitchCom = fmu.getReal([vrs['HSShftTq']])[0]
         
         # Append the results
         rows.append((time, GenTrq, GenSpeed, RotSpeed, BlPitchCom))
-        # print(f"rows : {rows}")
 
         # advance the time
         time += step_size
 
     print(f"Simulation finished at time {time}")
-    # Terminate the FMU
-    
-    # fmu.terminate()
-
-    # fmu.freeInstance()
-    # print("FMU freed")
 
     # clean up
     shutil.rmtree(unzipdir, ignore_errors=True)
@@ -124,14 +97,8 @@ def simulate_custom_input(show_plot=True):
         ('BlPitchCom', np.float64),
     ]))
 
-    # Print the results
-    # print("results = " , result)
-
     # Save the results
     np.savetxt('results.csv', result, delimiter=',', header='time, GenTrq, GenSpeed, RotSpeed, BlPitchCom', comments='')
-
-    # fmu.terminate()
-    # fmu.freeInstance()
 
 
     if show_plot:
@@ -168,4 +135,7 @@ def simulate_custom_input(show_plot=True):
 
 if __name__ == '__main__':
     simulate_custom_input(show_plot=True)
+
+### C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export
+### C:/Users/larsi/Master/TOPS_LAH/TOPS_LAH
 

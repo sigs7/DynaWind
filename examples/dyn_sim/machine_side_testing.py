@@ -2,59 +2,33 @@
 
 from tops.dyn_models.pmsm import *
 
-# Define parameters
 pmsm_params = {
-    "rs": 0.015,
-    "x_d": 0.4,
-    "x_q": 0.4,
-    "Psi_m": 0.9,
-    "Tm": 4,
-    "w_n" : 2*np.pi*50  # nominal rad
+        "rs": 0.03,
+        "x_d": 0.4,
+        "x_q": 0.4,
+        "Psi_m": 0.9,
+        "Tm": 4,
+        "w_n" : 2*np.pi*50  # nominal rad
+    }
+
+MSC_params = {"T_conv" : 2/(300),
+            "vq_0" : 0.5,
+            "vd_0" : 0.0
 }
 
-MSC_params = {"T_conv" : 5e-1,
-              "vq_0" : 0.5,
-              "vd_0" : 0.0
-}
-
-prime_mover_params = {"T_pm" : 5e-1,
-                      "speed_0" : 0.5,
-                      "torque_0" : 0.5
+prime_mover_params = {"T_pm" : 1e-1,
+                    "speed_0" : 0.5,
+                    "torque_0" : 0.5
 }
 
 # Create PMSM instance
 pmsm = PMSM(pmsm_params = pmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mover_params)         # Initiate the PMSM
 
+
+res = {}
 # Lists to store the results
 time_values = []
 
-# States mechanical
-speed_values = []
-motor_torque_values = []
-motor_speed_values = []
-primemover_torque_values = []
-primemover_speed_values = []
-
-#States electrical
-i_d_values = []
-i_q_values = []
-v_d_values = []
-v_q_values = []
-
-motor_Pe_values = []
-
-# Control signals
-i_d_ref_values = []
-i_q_ref_values = []
-v_d_ref_values = []
-v_q_ref_values = []
-torque_ref_values = []
-speed_ref_values = []
-
-# Error signals
-error_speed_values = []
-error_iq_values = []
-error_id_values = []
 
 event_flag1 = True
 event_flag2 = True
@@ -63,9 +37,8 @@ event_flag3 = True
 
 # Simulation parameters
 t = 0
-# dt = 4e-3  # Time step
-dt = 0.025
-# tol = 1e-10  # Tolerance
+dt = 5e-3
+
 simulation_time = 25  # Total simulation time
 
 unique_timesteps = set()
@@ -101,90 +74,72 @@ while t < simulation_time:
 
     t += dt
 
-    # Get mechanical states
-    # motor_speed = pmsm.speed
-
-    # Get electrical states
-    i_d = pmsm.i_d
-    i_q = pmsm.i_q
-    v_d = pmsm.converter.vd
-    v_q = pmsm.converter.vq
-
-    # Get controller signals and outputs
+    # Get mechanical states and controller signals
     error_speed = pmsm.primemover.speed_ref - pmsm.primemover.speed
-    motor_torque_ref = pmsm.torque_ref
-    i_q_ref = pmsm.i_q_ref
-    i_d_ref = pmsm.i_d_ref
-
-    # Current control signals
-    v_d_ref = pmsm.converter.vd_ref
-    v_q_ref = pmsm.converter.vq_ref
 
     # Store the results
     time_values.append(t)
 
     # Store the mechanical states
-    motor_torque_values.append(pmsm.get_Te())
-    motor_speed_values.append(pmsm.speed)
-    primemover_torque_values.append(pmsm.primemover.torque)
-    primemover_speed_values.append(pmsm.primemover.speed)
+    res.setdefault('motor_torque_values', []).append(pmsm.get_Te())
+    res.setdefault('motor_speed_values', []).append(pmsm.speed)
+    res.setdefault('primemover_torque_values', []).append(pmsm.primemover.torque)
+    res.setdefault('primemover_speed_values', []).append(pmsm.primemover.speed)
 
     # Store the electrical states
-    i_d_values.append(i_d)
-    i_q_values.append(i_q)
-    v_d_values.append(v_d)
-    v_q_values.append(v_q)
-
-    motor_Pe_values.append(pmsm.get_Pe())
+    res.setdefault('i_d_values', []).append(pmsm.i_d)
+    res.setdefault('i_q_values', []).append(pmsm.i_q)
+    res.setdefault('v_d_values', []).append(pmsm.converter.vd)
+    res.setdefault('v_q_values', []).append(pmsm.converter.vq)
+    res.setdefault('motor_Pe_values', []).append(pmsm.get_Pe())
 
     # Store the control signals
-    i_d_ref_values.append(pmsm.i_d_ref)
-    i_q_ref_values.append(i_q_ref)
-    v_d_ref_values.append(v_d_ref)
-    v_q_ref_values.append(v_q_ref)
-    torque_ref_values.append(motor_torque_ref)
-    speed_ref_values.append(pmsm.primemover.speed_ref)
+    res.setdefault('i_d_ref_values', []).append(pmsm.i_d_ref)
+    res.setdefault('i_q_ref_values', []).append(pmsm.i_q_ref)
+    res.setdefault('v_d_ref_values', []).append(pmsm.converter.vd_ref)
+    res.setdefault('v_q_ref_values', []).append(pmsm.converter.vq_ref)
+    res.setdefault('torque_ref_values', []).append(pmsm.torque_ref)
+    res.setdefault('speed_ref_values', []).append(pmsm.primemover.speed_ref)
 
     # Store the error signals
-    error_speed_values.append(error_speed)
-    error_iq_values.append(pmsm.i_q_ref - i_q)
-    error_id_values.append(pmsm.i_d_ref - i_d)
+    res.setdefault('error_speed_values', []).append(error_speed)
+    res.setdefault('error_iq_values', []).append(pmsm.i_q_ref - pmsm.i_q)
+    res.setdefault('error_id_values', []).append(pmsm.i_d_ref - pmsm.i_d)
 
 print("")
 print("Unique timesteps: ", len(unique_timesteps))
 print("")
 print("Plotting in progress...")
-# Plot the results of votlage and current
+# Plot the results of voltage and current
 fig, axs = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
 
 # Speed plot
-axs[0].plot(time_values, speed_ref_values, label='Speed Reference', linestyle='--')
-axs[0].plot(time_values, motor_speed_values, label='Motor Speed')
-axs[0].plot(time_values, primemover_speed_values, label='turbine speed')
+axs[0].plot(time_values, res['speed_ref_values'], label='Speed Reference', linestyle='--')
+axs[0].plot(time_values, res['motor_speed_values'], label='Motor Speed')
+axs[0].plot(time_values, res['primemover_speed_values'], label='Turbine Speed')
 axs[0].set_ylabel('Speed (pu)')
 axs[0].legend()
 axs[0].grid(True)
 
 # Torque plots
-axs[1].plot(time_values, motor_torque_values, label='motor torque')
-axs[1].plot(time_values, primemover_torque_values, label='turbine torque')
-axs[1].plot(time_values, torque_ref_values, label='Torque Reference', linestyle='--')
+axs[1].plot(time_values, res['motor_torque_values'], label='Motor Torque')
+axs[1].plot(time_values, res['primemover_torque_values'], label='Turbine Torque')
+axs[1].plot(time_values, res['torque_ref_values'], label='Torque Reference', linestyle='--')
 axs[1].set_ylabel('Torque (pu)')
 axs[1].legend()
 axs[1].grid(True)
 
 # Current plots
-axs[2].plot(time_values, i_d_values, label='i_d')
-axs[2].plot(time_values, i_q_values, label='i_q')
-axs[2].plot(time_values, motor_Pe_values, label='motor Pe')
+axs[2].plot(time_values, res['i_d_values'], label='i_d')
+axs[2].plot(time_values, res['i_q_values'], label='i_q')
+axs[2].plot(time_values, res['motor_Pe_values'], label='Motor Pe')
 axs[2].set_ylabel('Currents (pu)')
 axs[2].legend()
 axs[2].grid(True)
 
 # Voltage plots
-
-axs[3].plot(time_values, v_d_values, label='v_d')
-axs[3].plot(time_values, v_q_values, label='v_q')
+axs[3].plot(time_values, res['v_d_values'], label='v_d')
+axs[3].plot(time_values, res['v_q_values'], label='v_q')
 axs[3].set_xlabel('Time (s)')
 axs[3].set_ylabel('Voltage (pu)')
 axs[3].legend()
@@ -199,30 +154,29 @@ plt.savefig("Figures/MST_motorperformance.png")
 fig, axs = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
 
 # Current reference plots
-axs[0].plot(time_values, i_d_ref_values, label='i_d_ref')
-axs[0].plot(time_values, i_d_values, label='i_d')
-axs[0].plot(time_values, i_q_ref_values, label='i_q_ref')
-axs[0].plot(time_values, i_q_values, label='i_q')
+axs[0].plot(time_values, res['i_d_ref_values'], label='i_d_ref')
+axs[0].plot(time_values, res['i_d_values'], label='i_d')
+axs[0].plot(time_values, res['i_q_ref_values'], label='i_q_ref')
+axs[0].plot(time_values, res['i_q_values'], label='i_q')
 axs[2].set_xlabel('Time (s)')
 axs[0].set_ylabel('Current References (pu)')
 axs[0].legend()
 axs[0].grid(True)
 
 # Voltage reference plots
-axs[1].plot(time_values, v_d_ref_values, label='v_d_ref')
-axs[1].plot(time_values, v_q_ref_values, label='v_q_ref')
-axs[1].plot(time_values, v_d_values, label='v_d')
-axs[1].plot(time_values, v_q_values, label='v_q')
+axs[1].plot(time_values, res['v_d_ref_values'], label='v_d_ref')
+axs[1].plot(time_values, res['v_q_ref_values'], label='v_q_ref')
+axs[1].plot(time_values, res['v_d_values'], label='v_d')
+axs[1].plot(time_values, res['v_q_values'], label='v_q')
 axs[1].set_xlabel('Time (s)')
 axs[1].set_ylabel('Voltage References (pu)')
 axs[1].legend()
 axs[1].grid(True)
 
 # Speed error plot
-
-axs[2].plot(time_values, error_speed_values, label='Speed Error')
-axs[2].plot(time_values, torque_ref_values, label='Torque Ref')
-# axs[2].plot(time_values, i_q_ref_values, label='i_q_ref')
+axs[2].plot(time_values, res['error_speed_values'], label='Speed Error')
+axs[2].plot(time_values, res['torque_ref_values'], label='Torque Ref')
+# axs[2].plot(time_values, res['i_q_ref_values'], label='i_q_ref')
 axs[2].set_xlabel('Time (s)')
 axs[2].set_ylabel('Speed Error (pu)')
 axs[2].legend()

@@ -14,6 +14,7 @@ class VSC(DAEModel):
         return {'terminal': self.par['bus']}
 
     def add_blocks(self):
+
         p = self.par
         self.pll = PLL1(T_filter=self.par['T_pll'], bus=p['bus'])
 
@@ -139,6 +140,7 @@ class VSC_PQ(DAEModel):
         # Limiters
         i_ref = (i_d_ref+1j*i_q_ref)
         i_ref = i_ref*par['i_max']/np.maximum(par['i_max'],abs(i_ref))
+
         X['x_p'] = np.maximum(np.minimum(X['x_p'],par['i_max']),-par['i_max'])
         X['x_q'] = np.maximum(np.minimum(X['x_q'],par['i_max']),-par['i_max'])
 
@@ -224,9 +226,9 @@ class GridSideConverter(DAEModel):
     States:
     i_d
     i_q
-    vdc
-    angle
+    angle   PLL angle
     xpll    integral i pll
+    vdc     DC link voltage
 
     """
 
@@ -249,16 +251,22 @@ class GridSideConverter(DAEModel):
     def init_from_load_flow(self, x_0, v_0, S):
         X = self.local_view(x_0)
 
-        self._input_values['p_ref'] = self.par['p_ref']       # unescassary?
-        self._input_values['q_ref'] = self.par['q_ref']
+        self._input_values['p_ref_grid'] = self.par['p_ref_grid']       # unescassary?
+        self._input_values['q_ref_grid'] = self.par['q_ref_grid']
 
         vg = v_0[self.bus_idx_red['terminal']]
 
         X['angle'] = np.angle(vg)
-        X['i_d'] = self.par['p_ref']/abs(vg)
-        X['i_q'] = self.par['q_ref']/abs(vg)
         X['x_pll'] = 0
-        # X["vdc"] = 1.0
+        X['i_d'] = self.par['p_ref_grid']/abs(vg)
+        X['i_q'] = self.par['q_ref_grid']/abs(vg)
+        X["vdc"] = 1.0
+        X['x_pref_adj'] = 0.0
+
+        # X["pref_adj"] = 0.0
+        # X['vdc_ref'] = self.par['vdc_ref']
+        # X['p_ref'] = self.par['p_ref']
+        # X['q_ref'] = self.par['q_ref']
         
     def state_derivatives(self, dx, x, v):
         dX = self.local_view(dx)
@@ -268,8 +276,14 @@ class GridSideConverter(DAEModel):
         # self.p_ref = IPMSM.get_Pe() - self.vdc_controller.compute((self.vdc_ref - X["vdc"]))*X["vdc"]
         # self.q_ref = 0.0     # Should be updated from grid side command
 
-        i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref"] * self.v_d(x,v) - self.par["q_ref"] * self.v_q(x,v))
-        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref"] * self.v_q(x,v) + self.par["q_ref"] * self.v_d(x,v))
+        i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_d(x,v) - self.par["q_ref_grid"] * self.v_q(x,v))
+        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_q(x,v) + self.par["q_ref_grid"] * self.v_d(x,v))
+
+        # i_d_ref = max(0, i_d_ref)
+        # i_q_ref = max(0, i_q_ref)
+
+        # i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (X["p_ref"] * self.v_d(x,v) - X["q_ref"] * self.v_q(x,v))
+        # i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (X["p_ref"] * self.v_q(x,v) + X["q_ref"] * self.v_d(x,v))
 
         # Limiters
         i_ref = (i_d_ref+1j*i_q_ref)
@@ -279,12 +293,14 @@ class GridSideConverter(DAEModel):
         dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
         dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
         dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
-        # dX["vdc"][:] = (self.p_ref - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
-        #dX['angle'][:] = 0
+        dX["vdc"][:] = (par["p_ref_gen"] - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
+        dX["x_pref_adj"][:] = (X["vdc"] - par["vdc_ref"] ) * (par["K_p_dc"] / par["T_i_dc"])
+
+
         return    
 
     def load_flow_pq(self):
-        return self.bus_idx['terminal'], -self.par['p_ref']*self.par['S_n'], -self.par['q_ref']*self.par['S_n']
+        return self.bus_idx['terminal'], -self.par['p_ref_grid']*self.par['S_n'], -self.par['q_ref_grid']*self.par['S_n']
 
     def int_par_list(self):
         return ['f']
@@ -304,8 +320,12 @@ class GridSideConverter(DAEModel):
         x_q: q-control integral
         x_pll: pll q-axis integral
         angle: pll angle
+        x_pref_adj: DC link voltage control integral
+        pref_adj: DC link voltage control output
+        vdc: DC link voltage
         """
-        return ['i_d', 'i_q', 'x_p', 'x_q', 'x_pll', 'angle']
+        # return ['i_d', 'i_q', 'x_p', 'x_q', 'x_pll', 'angle', 'vdc', 'vdc_ref', 'x_pref_adj', 'pref_adj' ,"p_ref", "q_ref"]
+        return ['i_d', 'i_q', 'x_pll', 'angle', 'vdc', 'x_pref_adj']
 
     def input_list(self):
         """
@@ -313,19 +333,11 @@ class GridSideConverter(DAEModel):
         p_ref: outer loop active power setpoint
         q_ref: outer loop reactive power setpoint
         """
-        return ['p_ref', 'q_ref']
+        return ['p_ref_grid', 'q_ref_grid']
 
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
         return self.bus_idx_red['terminal'], self.i_inj(x, v) * i_n_r
-    
-    
-    def set_pref(self, Pref, index):
-        self.par['p_ref'][index] = Pref
-
-    def set_qref(self, Qref, index):
-        self.par['q_ref'][index] = Qref
-    
 
     # region Utility methods
     def i_inj(self, x, v):
@@ -352,4 +364,24 @@ class GridSideConverter(DAEModel):
     def q_e(self, x, v):
         return self.s_e(x,v).imag
 
+    def vdc(self, x, v):
+        return self.local_view(x)["vdc"]
+    
+    def set_pref_grid(self, x, v, index):
+        X = self.local_view(x)
+        self.par["p_ref_grid"][index] = self.par["p_ref_gen"][index] + self.p_ref_adj(x,v)[index]
+
+    def set_pref_gen(self, ref, index):
+        self.par['p_ref_gen'][index] = ref
+
+    def p_ref_adj(self, x, v):
+        X = self.local_view(x)
+        return (X["x_pref_adj"] + (X["vdc"] - self.par["vdc_ref"]) * self.par["K_p_dc"]) #* X["vdc"]
+
+    def set_qref_grid(self, Qref, index):
+        self.par['q_ref_grid'][index] = Qref
+    
+
+
+    
     # endregion

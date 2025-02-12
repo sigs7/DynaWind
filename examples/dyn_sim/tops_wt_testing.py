@@ -43,10 +43,10 @@ if __name__ == '__main__':
     import tops.ps_models.n44 as model_data
     model = model_data.load()
 
-    model["vsc"] = {"GridSideConverter": [
-        ['name',   'bus', 'S_n',   "p_ref",   "q_ref",   'Cdc',   'k_p',    'k_q',  'T_p',  'T_q',     'k_pll',   'T_pll',    'T_i',    'i_max'],
-        ['WT1',    '3000',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
-        ['WT2',    '5100',    50,      0.0,         0,      0.1,       5,       1,     0.1,     0.1,        5,        1,         0.01,      1.2],
+    model["vsc"] = {"GridSideConverter": [ 
+    ['name',   'bus',    'S_n',      "p_ref_grid",      "q_ref_grid",       "p_ref_gen",     'Cdc',      'k_p',      'k_q',    'T_p',     'T_q',     'k_pll',   'T_pll',    'T_i',    'K_p_dc',   'T_i_dc',    'i_max',   'vdc_ref'],
+    ['WT1',    '3000',    50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     0.05,          0.2,         1.2,       1.0],
+    ['WT2',    '5100',    50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     0.05,          0.2,         1.2,       1.0],
     ]}
 
     # Power system model
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
     x_0 = ps.x_0.copy()
-    t_end = 10
+    t_end = 30
     dt = 5e-3
 
     # Solver
@@ -95,17 +95,6 @@ if __name__ == '__main__':
             pmsm2.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.9, ramp_time=3, dt=dt, current_time=t)
             event_flag2 = False 
 
-        pmsm1.update_states(t=t, dt=sol.dt)
-        Pref1 = pmsm1.get_Pe()
-        ps.vsc["GridSideConverter"].set_pref(Pref1, 0)
-
-        pmsm2.update_states(t=t, dt=sol.dt)
-        Pref2 = pmsm2.get_Pe()
-        ps.vsc["GridSideConverter"].set_pref(Pref2, 1)
-
-        # Fra Jørgen og Nora
-        # ps.vsc["VSC1"].set_input("P_setp", value, index)
-
         # Simulate next step
         result = sol.step()
         x = sol.y
@@ -115,6 +104,31 @@ if __name__ == '__main__':
         unique_timesteps.add(sol.dt)
 
         dx = ps.ode_fun(0, ps.x_0)
+
+        pmsm1.update_states(t=t, dt=sol.dt)
+        Pref_gen1 = pmsm1.get_Pe()
+        ps.vsc["GridSideConverter"].set_pref_gen(ref=Pref_gen1, index=0)
+        ps.vsc["GridSideConverter"].set_pref_grid(index=0, x=x, v=v)
+
+
+        pmsm2.update_states(t=t, dt=sol.dt)
+        Pref_gen2 = pmsm2.get_Pe()
+        ps.vsc["GridSideConverter"].set_pref_gen(ref=Pref_gen2, index=1)
+        ps.vsc["GridSideConverter"].set_pref_grid(index=1, x=x, v=v)
+
+        # # Debugging: Print the values of p_ref
+        # print(f"WT1 p_ref: {ps.vsc['GridSideConverter'].p_ref(x, v)[0]}")
+        # print(f"WT2 p_ref: {ps.vsc['GridSideConverter'].p_ref(x, v)[1]}")
+        
+        # Fra Jørgen og Nora
+        # ps.vsc["VSC1"].set_input("P_setp", value, index)
+
+        # Simulate next step
+        result = sol.step()
+        x = sol.y
+        v = sol.v
+        t = sol.t
+
 
         # Store result
         res['t'].append(t)
@@ -166,13 +180,23 @@ if __name__ == '__main__':
         res["WT1 p_e"].append(ps.vsc["GridSideConverter"].p_e(x, v)[0].copy())
         res["WT1 q_e"].append(ps.vsc["GridSideConverter"].q_e(x, v)[0].copy())
         res["WT1 i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v)[0].copy()))
-        res["WT1 p_ref"].append(ps.vsc["GridSideConverter"].p_ref(x, v)[0].copy())
+        res["WT1 p_ref_grid"].append(ps.vsc["GridSideConverter"].par["p_ref_grid"][0].copy())
+        res["WT1 p_ref_gen"].append(ps.vsc["GridSideConverter"].par["p_ref_gen"][0].copy())
+        res["WT1 p_ref_adj"].append(ps.vsc["GridSideConverter"].p_ref_adj(x, v)[0].copy())
+        res["WT1 vdc"].append(ps.vsc["GridSideConverter"].vdc(x, v)[0].copy())
+        res["WT1 vdc_ref"].append(ps.vsc["GridSideConverter"].par["vdc_ref"][0].copy())
+
 
         # WT2
         res["WT2 p_e"].append(ps.vsc["GridSideConverter"].p_e(x, v)[1].copy())
         res["WT2 q_e"].append(ps.vsc["GridSideConverter"].q_e(x, v)[1].copy())
         res["WT2 i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v)[1].copy()))
-        res["WT2 p_ref"].append(ps.vsc["GridSideConverter"].p_ref(x, v)[1].copy())
+        res["WT2 p_ref_grid"].append(ps.vsc["GridSideConverter"].par["p_ref_grid"][1].copy())
+        res["WT2 p_ref_gen"].append(ps.vsc["GridSideConverter"].par["p_ref_gen"][1].copy())
+        res["WT2 p_ref_adj"].append(ps.vsc["GridSideConverter"].p_ref_adj(x, v)[1].copy())
+        res["WT2 vdc"].append(ps.vsc["GridSideConverter"].vdc(x, v)[1].copy())
+        res["WT2 vdc_ref"].append(ps.vsc["GridSideConverter"].par["vdc_ref"][1].copy())
+
 
         # t += dt
 
@@ -295,3 +319,57 @@ if __name__ == '__main__':
 
     # plt.figure()
     # plt.plot(res['t'], res['GenTrq'], label='Turbine torque')
+
+
+    fig, axs = plt.subplots(3, 2, figsize=(15, 15), sharex=True)
+
+    # WT1 DC Link Voltage
+    axs[0, 0].plot(res['t'], res["WT1 vdc"], label='WT1 vdc')
+    axs[0, 0].plot(res['t'], res["WT1 vdc_ref"], label='WT1 vdc_ref')
+    axs[0, 0].set_ylabel('vdc (pu)')
+    axs[0, 0].legend()
+    axs[0, 0].grid(True)
+    axs[0, 0].set_title('WT1 DC Link Voltage')
+
+    # WT2 DC Link Voltage
+    axs[0, 1].plot(res['t'], res["WT2 vdc"], label='WT2 vdc')
+    axs[0, 1].plot(res['t'], res["WT2 vdc_ref"], label='WT2 vdc_ref')
+    axs[0, 1].set_ylabel('vdc (pu)')
+    axs[0, 1].legend()
+    axs[0, 1].grid(True)
+    axs[0, 1].set_title('WT2 DC Link Voltage')
+
+    # WT1 Active Power Reference
+    axs[1, 0].plot(res['t'], res["WT1 p_ref_gen"], label='WT1 p_ref_gen')
+    axs[1, 0].plot(res['t'], res["WT1 p_e"], label='WT1 p_e')
+    axs[1, 0].set_ylabel('p_ref (pu)')
+    axs[1, 0].legend()
+    axs[1, 0].grid(True)
+    axs[1, 0].set_title('WT1 Active Power Reference')
+
+    # WT2 Active Power Reference
+    axs[1, 1].plot(res['t'], res["WT2 p_ref_gen"], label='WT2 p_ref_gen')
+    axs[1, 1].plot(res['t'], res["WT2 p_e"], label='WT2 p_e')
+    axs[1, 1].set_ylabel('p_ref (pu)')
+    axs[1, 1].legend()
+    axs[1, 1].grid(True)
+    axs[1, 1].set_title('WT2 Active Power Reference')
+
+    # WT1 Active Power Reference Adjustment
+    axs[2, 0].plot(res['t'], res["WT1 p_ref_adj"], label='WT1 p_ref_adj')
+    axs[2, 0].set_ylabel('p_ref_adj (pu)')
+    axs[2, 0].legend()
+    axs[2, 0].grid(True)
+    axs[2, 0].set_title('WT1 Active Power Reference Adjustment')
+
+    # WT2 Active Power Reference Adjustment
+    axs[2, 1].plot(res['t'], res["WT2 p_ref_adj"], label='WT2 p_ref_adj')
+    axs[2, 1].set_ylabel('p_ref_adj (pu)')
+    axs[2, 1].legend()
+    axs[2, 1].grid(True)
+    axs[2, 1].set_title('WT2 Active Power Reference Adjustment')
+
+    plt.xlabel('Time (s)')
+    plt.tight_layout()
+    plt.savefig("Figures/TOPS_VSC_response.png")
+    # plt.show()

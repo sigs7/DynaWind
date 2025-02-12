@@ -177,7 +177,7 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         self.pi_controller_iq = PIController_LAH(kp=0.5, ti=0.2)
         self.pi_controller_speed = PIController_LAH(kp=20, ti=0.1)
 
-        # Desired currents and speed
+        # Initiate reference values
         self.i_d_ref = 0.0          # Må kanskje endres senere
         self.torque_ref = 0.0       # Will be asigned from speed controller
         self.i_q_ref = 0.0
