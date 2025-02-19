@@ -17,10 +17,10 @@ def simulate_custom_input(show_plot=True):
 
     # define the model name and simulation parameters
     # fmu_filename = 'C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/fast.fmu'
-    fmu_filename = 'fast_debug.fmu'
+    fmu_filename = 'fast.fmu'
     
     start_time = 0.0
-    stop_time = 20
+    stop_time = 5
     step_size = 0.01
 
     # read the model description
@@ -39,7 +39,7 @@ def simulate_custom_input(show_plot=True):
     # extract the FMU
     unzipdir = extract(fmu_filename, os.path.abspath('openfast_debug_fmu'))
 
-    wd_file_path = 'openfast_debug_fmu/resources/wd.txt'
+    wd_file_path = 'openfast_fmu/resources/wd.txt'
     new_directory = 'C:/Users/larsi/Master/TOPS_LAH/TOPS_LAH'
 
     # Write the new directory to the wd.txt file
@@ -67,9 +67,9 @@ def simulate_custom_input(show_plot=True):
     while time < stop_time:
 
         # Perform one step
-        print(f" \n \nPerforming step at time {time} \n \n")
+        # print(f" \n \nPerforming step at time {time} \n \n")
         fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
-        print(f"Step performed at time {time}")
+        # print(f"Step performed at time {time}")
 
         # Get the outputs
         GenTrq = fmu.getReal([vrs['GenTq']])[0]

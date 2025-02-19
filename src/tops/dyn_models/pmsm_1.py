@@ -151,13 +151,15 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
     def __init__(self, pmsm_params : dict, MSC_params : dict, prime_mover_params : dict):
         
         """
-        params = {
-            "x_q": 0.533,         q-axis reactance [pu]
-            "x_d": 1.07,          d-axis reactancce
-            "speed": 1.0,         Nominal speed
-            "rs": 0.01,           Stator resistance
-            "Psi_m": 0.8,         Permanent magnet flux linkage
-            "T_m" : 3.7           Mechanical time constant -> Tm =(J*omega**2)/Sn
+        pmsm_params = {
+            "s_n" : 10,     # MVA
+            "U_n" : 730,    # V
+            "rs": 0.03,     # Stator resistance
+            "x_d": 0.4,     # Stator d-axis inductance
+            "x_q": 0.4,     # Stator q-axis inductance
+            "Psi_m": 0.9,   # Magnetic flux
+            "w_n" : 2*np.pi*50  # nominal rad
+    }
         
         """
         # Assigning the basic parameters of the PMSM
@@ -169,7 +171,7 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
 
         # Initiating some basic initial values of operation, should be updated later based of load flow solution
         self.i_d = 0.0
-        self.i_q = 0.5
+        self.i_q = 0.0
         self.speed = self.primemover.speed
 
         # Initialize PI controllers for i_d, i_q, and speed with parameters adjusted for a larger timestep
@@ -221,7 +223,7 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         dX["i_q"] = (self.converter.vq - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
 
         # change in speed T_t - T_e
-        dX["speed"] = 1/p["Tm"] * (self.primemover.torque - Te)
+        dX["speed"] = 1/p["Tm"] * (self.primemover.torque + Te)
 
         return dX
        
@@ -238,19 +240,19 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         """
 
         # Compute speed error
-        error_speed = -(self.primemover.speed_ref - self.primemover.speed)
+        error_speed = (self.primemover.speed_ref - self.primemover.speed)
 
         # Compute control signal for torque
         self.torque_ref = self.pi_controller_speed.compute(error_speed, dt)
 
         # Limit torque reference
-        self.torque_ref = self.clamp_value(self.torque_ref, 1.5)
+        self.torque_ref = self.clamp_value(self.torque_ref, max_value=0, min_value=-2)        #, min_value=0.0
 
         # Calculate the required i_q_ref to produce the needed torque (algebraic)
         p = self.params
         self.i_q_ref = self.torque_ref / p["Psi_m"]
 
-        self.i_q_ref = self.clamp_value(self.i_q_ref, 1.2)
+        # self.i_q_ref = self.clamp_value(self.i_q_ref, 1.2)
 
     # endregion
 
@@ -258,8 +260,6 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
     # region Current controll functions
     def update_current_control(self, dt):
         p = self.params
-
-        
 
         # Compute errors
         error_id = self.i_d_ref - self.i_d
@@ -272,11 +272,11 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
 
         # I_d current control
         v_d_ctrl = v_dII + self.pi_controller_id.compute(error_id, dt)
-        v_d_ctrl = self.clamp_value(v_d_ctrl, 2)
+        v_d_ctrl = self.clamp_value(v_d_ctrl, max_value=2, min_value=-2)
         
         # I_q current control
         v_q_ctrl = v_qII + self.pi_controller_iq.compute(error_iq, dt)
-        v_q_ctrl = self.clamp_value(v_q_ctrl, 2)
+        v_q_ctrl = self.clamp_value(v_q_ctrl, max_value=2, min_value=-2)
 
         # Input voltage control signal to converter and update the voltages
         self.set_converter_voltages(v_d_ctrl, v_q_ctrl, dt)
@@ -402,12 +402,45 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
                 self.ramp_duration = 0  # Ramp completed
 
     # region Utility functions
-    def clamp_value(self, value, limit):
-        if value > limit:
-            value = limit
-        if value < -limit:
-            value = -limit
-        return value
+    # def clamp_value(self, value, limit, min_value=None):
+    #     if min_value is not None:
+    #         if value > limit:
+    #             value = limit
+    #         if value < min_value:
+    #             value = min_value
+    #     else:
+    #         if value > limit:
+    #             value = limit
+    #         if value < -limit:
+    #             value = -limit
+        
+    #     return value
+
+    def clamp_value(self, value, min_value=None, max_value=None):
+        """
+        Clamp the value within the specified minimum and maximum limits.
+
+        Parameters:
+        value (float): The value to be clamped.
+        min_value (float, optional): The minimum limit. Defaults to None.
+        max_value (float, optional): The maximum limit. Defaults to None.
+
+        Returns:
+        float: The clamped value.
+        """
+        if min_value is not None and max_value is not None:
+            # Clamp value between min_value and max_value
+            return max(min_value, min(value, max_value))
+        elif min_value is not None:
+            # Clamp value to be at least min_value
+            return max(min_value, value)
+        elif max_value is not None:
+            # Clamp value to be at most max_value
+            return min(value, max_value)
+        else:
+            # No clamping needed
+            return value
+
 
     def get_Te(self):
         p = self.params
@@ -426,7 +459,12 @@ class PMSM(MachineSideConverter, PrimeMover, PIController_LAH):
         return self.speed
     
     def get_Pe(self):
-        return self.converter.vd*self.i_d + self.converter.vq*self.i_q      # 3/2 fac?
+        return (-3/2)*(self.converter.vd*self.i_d + self.converter.vq*self.i_q)      # -3/2 fac to adjust to three-phase power and change direction as injection
+        # p = self.params
+        # return self.Vq*self.i_q + self.Vd*self.i_d + (self.i_d**2 + self.i_q**2)*p["rs"]
+
+    def get_Qe(self):
+        return (-3/2)*(self.converter.vq*self.i_d - self.converter.vd*self.i_q)      # 3/2 fac?
         # p = self.params
         # return self.Vq*self.i_q + self.Vd*self.i_d + (self.i_d**2 + self.i_q**2)*p["rs"]
     

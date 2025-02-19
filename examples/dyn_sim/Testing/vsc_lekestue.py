@@ -5,7 +5,7 @@ import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
 from tops.dyn_models.vsc1 import VSC_PV
-from tops.dyn_models.pmsm import *
+from tops.dyn_models.pmsm_1 import *
 
 
 # Må sjekke ut kordan ej ønsker å initialisere WT inn i "model"

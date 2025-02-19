@@ -291,10 +291,12 @@ class GridSideConverter(DAEModel):
 
         dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
         dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
+
         dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
         dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
+        
         dX["vdc"][:] = (par["p_ref_gen"] - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
-        dX["x_pref_adj"][:] = (X["vdc"] - par["vdc_ref"] ) * (par["K_p_dc"] / par["T_i_dc"])
+        dX["x_pref_adj"][:] = (X["vdc"] - par["vdc_ref"]) * (par["K_p_dc"] / par["T_i_dc"])
 
 
         return    

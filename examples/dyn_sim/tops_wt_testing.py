@@ -10,7 +10,7 @@ import importlib
 importlib.reload(dps)
 import importlib
 
-from tops.dyn_models.pmsm import *
+from tops.dyn_models.pmsm_1 import *
 # from tops.dyn_models.vsc1 import VSC_PV
 
 # Define parameters
@@ -23,7 +23,7 @@ pmsm_params = {
     "w_n" : 2*np.pi*50  # nominal rad
 }
 
-MSC_params = {"T_conv" : 1e-2,
+MSC_params = {"T_conv" : 2/(300),
               "vq_0" : 0.5,
               "vd_0" : 0.0
 }
@@ -40,13 +40,13 @@ pmsm2 = PMSM(pmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mo
 if __name__ == '__main__':
     # Load model
     # import tops.ps_models.user_ps_models.k2a_vsc as model_data
-    import tops.ps_models.n44 as model_data
+    import tops.ps_models.k2a_2WT as model_data
     model = model_data.load()
 
     model["vsc"] = {"GridSideConverter": [ 
     ['name',   'bus',    'S_n',      "p_ref_grid",      "q_ref_grid",       "p_ref_gen",     'Cdc',      'k_p',      'k_q',    'T_p',     'T_q',     'k_pll',   'T_pll',    'T_i',    'K_p_dc',   'T_i_dc',    'i_max',   'vdc_ref'],
-    ['WT1',    '3000',    50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     0.05,          0.2,         1.2,       1.0],
-    ['WT2',    '5100',    50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     0.05,          0.2,         1.2,       1.0],
+    ['WT1',    'B1',      50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     1.0,          0.2,         1.2,       1.0],
+    ['WT2',    'B3',      50,         0.0,               0,                  0.0,             0.1,          5,          1,        0.1,        0.1,        5,        1,         0.01,     1.0,          0.2,         1.2,       1.0],
     ]}
 
     # Power system model
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
 
     x_0 = ps.x_0.copy()
-    t_end = 30
+    t_end = 5
     dt = 5e-3
 
     # Solver
@@ -80,19 +80,19 @@ if __name__ == '__main__':
 
         # Update the states
         if t > 5 and event_flag1:
-            pmsm1.set_prime_mover_reference(speed_ref=0.3, torque_ref=0.4, ramp_time=3, dt=dt, current_time=t)
+            pmsm1.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.4, ramp_time=5, dt=dt, current_time=t)
             event_flag1 = False
 
         if t > 8 and event_flag3:
-            pmsm2.set_prime_mover_reference(speed_ref=0.4, torque_ref=0.8, ramp_time=3, dt=dt, current_time=t)
+            pmsm2.set_prime_mover_reference(speed_ref=0.9, torque_ref=0.8, ramp_time=5, dt=dt, current_time=t)
             event_flag3 = False
 
         if t > 12 and event_flag2:
-            pmsm1.set_prime_mover_reference(speed_ref=0.5, torque_ref=0.7, ramp_time=3, dt=dt, current_time=t)
+            pmsm1.set_prime_mover_reference(speed_ref=0.6, torque_ref=0.7, ramp_time=5, dt=dt, current_time=t)
             event_flag2 = False         
 
         if t > 12 and event_flag4:
-            pmsm2.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.9, ramp_time=3, dt=dt, current_time=t)
+            pmsm2.set_prime_mover_reference(speed_ref=0.8, torque_ref=0.9, ramp_time=5, dt=dt, current_time=t)
             event_flag2 = False 
 
         # Simulate next step
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 
         pmsm2.update_states(t=t, dt=sol.dt)
-        Pref_gen2 = pmsm2.get_Pe()
+        Pref_gen2 = -pmsm2.get_Pe()
         ps.vsc["GridSideConverter"].set_pref_gen(ref=Pref_gen2, index=1)
         ps.vsc["GridSideConverter"].set_pref_grid(index=1, x=x, v=v)
 
@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
     plt.xlabel('Time (s)')
     plt.tight_layout()
-    plt.savefig("Figures/TOPS_Mechanical_response.png")
+    plt.savefig("Figures/Prelim/TOPS_Mechanical_response.png")
 
 
     fig = plt.figure(figsize=(12, 8))
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     # Set the common xlabel and adjust spacing
     fig.text(0.5, 0.04, 'Time (s)', ha='center')
     plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
-    plt.savefig("Figures/TOPS_Electrical_response.png")
+    plt.savefig("Figures/Prelim/TOPS_Electrical_response.png")
 
     fig, axs = plt.subplots(3, 1, figsize=(15, 10), sharex=True)
 
@@ -314,7 +314,7 @@ if __name__ == '__main__':
     axs[2].set_title('Grid Reaction to Power Injections from WT1 and WT2')
 
     plt.tight_layout()
-    plt.savefig("Figures/TOPS_WT_system_response.png")
+    plt.savefig("Figures/Prelim/TOPS_WT_system_response.png")
     # plt.show()
 
     # plt.figure()
@@ -371,5 +371,5 @@ if __name__ == '__main__':
 
     plt.xlabel('Time (s)')
     plt.tight_layout()
-    plt.savefig("Figures/TOPS_VSC_response.png")
+    plt.savefig("Figures/Prelim/TOPS_VSC_response.png")
     # plt.show()

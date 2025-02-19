@@ -1,6 +1,6 @@
 # Testing the machine side modelling
 
-from tops.dyn_models.pmsm import *
+from tops.dyn_models.pmsm_1 import *
 
 pmsm_params = {
         "rs": 0.03,
@@ -39,7 +39,7 @@ event_flag3 = True
 t = 0
 dt = 5e-3
 
-simulation_time = 25  # Total simulation time
+simulation_time = 20  # Total simulation time
 
 unique_timesteps = set()
 
