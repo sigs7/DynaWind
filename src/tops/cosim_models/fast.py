@@ -48,10 +48,12 @@ class FAST:
 
         self.fmu.setReal([self.vrs['GenSpdOrTrq']], [-pmsm.get_T_e()])
         self.fmu.setReal([self.vrs['GenPwr']], [pmsm.get_P_e()])
-        if time < 10:
-            self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])
-        else:
-            self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])
+        # if time < :
+
+        self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])
+        
+        # else:
+        #     self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])
         self.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
     def terminate_fmu(self):

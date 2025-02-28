@@ -4,3 +4,5 @@ from . import machine_side_converter
 from . import pi_controller
 from . import results
 from . import windturbine
+from . import grid_side_converter
+from . import dclink

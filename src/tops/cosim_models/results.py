@@ -32,20 +32,41 @@ class Results:
         self.results[f"{WT.name}_PMSM Q_e"].append(WT.pmsm.get_Q_e())
         self.results[f"{WT.name}_PMSM i_d"].append(WT.pmsm.i_d)
         self.results[f"{WT.name}_PMSM i_q"].append(WT.pmsm.i_q)
-        self.results[f"{WT.name}_PMSM v_d"].append(WT.pmsm.converter.v_d)
-        self.results[f"{WT.name}_PMSM v_q"].append(WT.pmsm.converter.v_q)
+        self.results[f"{WT.name}_PMSM v_d"].append(WT.pmsm.msc.v_d)
+        self.results[f"{WT.name}_PMSM v_q"].append(WT.pmsm.msc.v_q)
+        self.results[f"{WT.name}_PMSM i_q_ref"].append(WT.pmsm.i_q_ref)
+        self.results[f"{WT.name}_PMSM i_d_ref"].append(WT.pmsm.i_d_ref)
+        self.results[f"{WT.name}_PMSM v_qII"].append(WT.pmsm.v_qII)
+        self.results[f"{WT.name}_PMSM v_dII"].append(WT.pmsm.v_dII)
 
 
+    def store_msc_results(self, WT : WindTurbine):
+        self.results[f"{WT.name}_MSC_v_q"].append(WT.msc.v_q)
+        self.results[f"{WT.name}_MSC_v_d"].append(WT.msc.v_d)
+        self.results[f"{WT.name}_MSC_v_q_ctrl"].append(WT.msc.pmsm.v_q_ctrl)
+        self.results[f"{WT.name}_MSC_v_d_ctrl"].append(WT.msc.pmsm.v_d_ctrl)
+        self.results[f"{WT.name}_MSC_i_dc"].append(WT.msc.i_dc())
+        self.results[f"{WT.name}_MSC_v_dc"].append(WT.msc.dclink.vdc)
+        self.results[f"{WT.name}_MSC_p_e_dc"].append(WT.msc.p_e_dc())
+        self.results[f"{WT.name}_MSC_p_e_dq"].append(WT.msc.p_e_dq())
 
-    def store_vsc_results(self, WT : WindTurbine , ps : PowerSystemModel, x, v):
+    def store_dclink_results(self, WT : WindTurbine):
+        self.results[f"{WT.name}_DC_vdc"].append(WT.dclink.vdc)
+        self.results[f"{WT.name}_DC_vdc_ref"].append(WT.dclink.vdc_ref)
+        self.results[f"{WT.name}_DC_i_chopper"].append(WT.dclink.i_chopper())
+        self.results[f"{WT.name}_DC_p_adjust"].append(WT.dclink.p_adjust())
+        self.results[f"{WT.name}_DC_gsc_p_ref"].append(WT.dclink.gsc_p_ref())
+        self.results[f"{WT.name}_DC_duty"].append(WT.dclink.duty())
+
+
+    def store_gsc_results(self, WT : WindTurbine , ps : PowerSystemModel, x, v):
         self.results[f"{WT.name}_GSC_p_e"].append(ps.vsc["GridSideConverter"].p_e(x, v)[WT.index].copy())
         self.results[f"{WT.name}_GSC_q_e"].append(ps.vsc["GridSideConverter"].q_e(x, v)[WT.index].copy())
         self.results[f"{WT.name}_GSC_i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v)[WT.index].copy()))
         self.results[f"{WT.name}_GSC_p_ref_grid"].append(ps.vsc["GridSideConverter"].par["p_ref_grid"][WT.index].copy())
-        self.results[f"{WT.name}_GSC_p_ref_gen"].append(ps.vsc["GridSideConverter"].par["p_ref_gen"][WT.index].copy())
-        self.results[f"{WT.name}_GSC_p_ref_adj"].append(ps.vsc["GridSideConverter"].p_ref_adj(x, v)[WT.index].copy())
-        self.results[f"{WT.name}_GSC_vdc"].append(ps.vsc["GridSideConverter"].vdc(x, v)[WT.index].copy())
-        self.results[f"{WT.name}_GSC_vdc_ref"].append(ps.vsc["GridSideConverter"].par["vdc_ref"][WT.index].copy())
+        self.results[f"{WT.name}_GSC_q_ref_grid"].append(ps.vsc["GridSideConverter"].par["q_ref_grid"][WT.index].copy())
+
+
 
     def store_generator_results(self, ps : PowerSystemModel, x, v, index = None):
         if index is not None:
@@ -58,20 +79,11 @@ class Results:
             self.results["Generators_i_inj"].append(abs(ps.gen['GEN'].i(x, v).copy()))
             self.results["Generators_p_e"].append(ps.gen['GEN'].p_e(x, v).copy())
 
- 
-            ### Generator results ###
-        # # G2
-        # res["G2 speed"].append(ps.gen['GEN'].speed(x, v)[1].copy())
-        # res["G2_i_inj"].append(abs(ps.gen['GEN'].i(x, v)[1].copy()))
-
-        # # All generators
-        # res["Generator speeds"].append(ps.gen['GEN'].speed(x, v).copy())
-        # res["Generator current injections"].append(abs(ps.gen['GEN'].i(x, v).copy()))
 
     # endregion
 
 
-    # region Plot results
+    # region Plot PMSM
 
     def plot_pmsm_overview(self, sim_name : str, WT : WindTurbine):
         fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
@@ -134,7 +146,11 @@ class Results:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/PMSM_Overview_{sim_name}.png")
-        
+    
+    # endregion
+
+    # region plot FMU
+
     def plot_fmu_overview(self, sim_name : str, WT : WindTurbine):
         fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
 
@@ -194,40 +210,169 @@ class Results:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/FMU_Overview_{sim_name}.png")
+
+    # endregion    
         
+    # region plot MSC
+    def plot_msc_overview(self, sim_name : str, WT : WindTurbine):
+        fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
 
+        # First column, first row: MSC v_q, v_d, v_q_ref, and v_d_ref
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_q'], label='v_q')
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_d'], label='v_d')
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_q_ctrl'], label='v_q_ctrl')
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_d_ctrl'], label='v_d_ctrl')
+        axs[0, 0].set_ylabel('Voltage (pu)')
+        axs[0, 0].legend()
+        axs[0, 0].grid(True)
+        axs[0, 0].set_title('MSC Voltages and References')
 
-    def plot_vsc_overview(self, sim_name : str, WT : WindTurbine):
+        # First column, second row: MSC v_qII and v_dII
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_PMSM v_qII'], label='v_qII')
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_PMSM v_dII'], label='v_dII')
+        axs[1, 0].set_ylabel('Voltage (pu)')
+        axs[1, 0].legend()
+        axs[1, 0].grid(True)
+        axs[1, 0].set_title('MSC Feedforward Terms')
 
-        fig, axs = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
+        # First column, third row: MSC i_dc and v_dc
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_i_dc'], label='i_dc')
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_dc'], label='v_dc')
+        axs[2, 0].set_ylabel('Current (pu)')
+        axs[2, 0].legend()
+        axs[2, 0].grid(True)
+        axs[2, 0].set_title('MSC DC Current and Voltage')
 
-        # WT1 DC Link Voltage
-        axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc'], label='WT1 vdc')
-        axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc_ref'], label='WT1 vdc_ref')
-        axs[0].set_ylabel('vdc (pu)')
-        axs[0].legend()
-        axs[0].grid(True)
-        axs[0].set_title('WT1 DC Link Voltage')
+        # Second column, first row: MSC p_e_dc and p_e_dq
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_MSC_p_e_dc'], label='p_e_dc')
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_MSC_p_e_dq'], label='p_e_dq')
+        axs[0, 1].set_ylabel('Power (pu)')
+        axs[0, 1].legend()
+        axs[0, 1].grid(True)
+        axs[0, 1].set_title('MSC Power')
 
-        # WT1 Active Power Reference
-        axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_gen'], label='WT1 p_ref_gen')
-        axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label='WT1 p_e')
-        axs[1].set_ylabel('p_ref (pu)')
-        axs[1].legend()
-        axs[1].grid(True)
-        axs[1].set_title('WT1 Active Power Reference')
+        # Second column, second row: PMSM i_q and i_q_ref
+        axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM i_q'], label='i_q')
+        axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM i_q_ref'], label='i_q_ref')
+        axs[1, 1].set_ylabel('Current (pu)')
+        axs[1, 1].legend()
+        axs[1, 1].grid(True)
+        axs[1, 1].set_title('PMSM q-axis Current')
 
-        # WT1 Active Power Reference Adjustment
-        axs[2].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_adj'], label='WT1 p_ref_adj')
-        axs[2].set_ylabel('p_ref_adj (pu)')
-        axs[2].legend()
-        axs[2].grid(True)
-        axs[2].set_title('WT1 Active Power Reference Adjustment')
+        # Second column, third row: PMSM i_d and i_d_ref
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM i_d'], label='i_d')
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM i_d_ref'], label='i_d_ref')
+        axs[2, 1].set_ylabel('Current (pu)')
+        axs[2, 1].legend()
+        axs[2, 1].grid(True)
+        axs[2, 1].set_title('PMSM d-axis Current')
+
+        # Set the common xlabel and adjust spacing
+        fig.text(0.5, 0.04, 'Time (s)', ha='center')
+        plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
+        
+        # Create directory if it does not exist
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/MSC_Overview_{sim_name}.png")
+
+    # endregion
+
+    # region Plot DC-link
+    
+    def plot_dclink_overview(self, sim_name : str, WT : WindTurbine):
+        fig, axs = plt.subplots(3, 2, figsize=(15, 15), sharex=True)
+
+        # First column, first row: DC-link voltage and reference voltage
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc'], label='vdc')
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref')
+        axs[0, 0].set_ylabel('Voltage (pu)')
+        axs[0, 0].legend()
+        axs[0, 0].grid(True)
+        axs[0, 0].set_title('DC-link Voltage and Reference')
+
+        # First column, second row: Chopper current
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_i_chopper'], label='i_chopper')
+        axs[1, 0].set_ylabel('Current (pu)')
+        axs[1, 0].legend()
+        axs[1, 0].grid(True)
+        axs[1, 0].set_title('Chopper Current')
+
+        # First column, third row: Power adjustment
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust')
+        axs[2, 0].set_ylabel('Power (pu)')
+        axs[2, 0].legend()
+        axs[2, 0].grid(True)
+        axs[2, 0].set_title('Power Adjustment')
+
+        # Second column, first row: Duty cycle
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_duty'], label='duty')
+        axs[0, 1].set_ylabel('Duty Cycle')
+        axs[0, 1].legend()
+        axs[0, 1].grid(True)
+        axs[0, 1].set_title('Chopper Duty Cycle')
+
+        # Second column, second row: GSC power reference
+        axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_gsc_p_ref'], label='gsc_p_ref')
+        axs[1, 1].set_ylabel('Power (pu)')
+        axs[1, 1].legend()
+        axs[1, 1].grid(True)
+        axs[1, 1].set_title('GSC Power Reference')
+
+        # Second column, third row: DC-link current
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_MSC_i_dc'], label='i_dc')
+        axs[2, 1].set_ylabel('Current (pu)')
+        axs[2, 1].legend()
+        axs[2, 1].grid(True)
+        axs[2, 1].set_title('DC-link Current')
 
         plt.xlabel('Time (s)')
         plt.tight_layout()
-        # plt.savefig(f"Figures/co_sim/GSC_Overview_{sim_name}.png")
-        # plt.show()
+
+        # Create directory if it does not exist
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/DClink_Overview_{sim_name}.png")
+
+    # region Plot GSC
+    def plot_gsc_overview(self, sim_name : str, WT : WindTurbine):
+        fig, axs = plt.subplots(4, 1, figsize=(15, 20), sharex=True)
+
+        # GSC p_e and p_ref_grid
+        axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label='p_e')
+        axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_grid'], label='p_ref_grid')
+        axs[0].set_ylabel('Power (pu)')
+        axs[0].legend()
+        axs[0].grid(True)
+        axs[0].set_title('GSC Active Power and Reference')
+
+        # GSC q_e and q_ref_grid
+        axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
+        axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_ref_grid'], label='q_ref_grid')
+        axs[1].set_ylabel('Reactive Power (pu)')
+        axs[1].legend()
+        axs[1].grid(True)
+        axs[1].set_title('GSC Reactive Power and Reference')
+
+        # GSC i_inj
+        axs[2].plot(self.results['Time'], self.results[f'{WT.name}_GSC_i_inj'], label='i_inj')
+        axs[2].set_ylabel('Current (pu)')
+        axs[2].legend()
+        axs[2].grid(True)
+        axs[2].set_title('GSC Current Injection')
+
+        # GSC v_q and v_d
+        axs[3].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_q'], label='v_q')
+        axs[3].plot(self.results['Time'], self.results[f'{WT.name}_MSC_v_d'], label='v_d')
+        axs[3].set_ylabel('Voltage (pu)')
+        axs[3].legend()
+        axs[3].grid(True)
+        axs[3].set_title('MSC Voltages')
+
+        plt.xlabel('Time (s)')
+        plt.tight_layout()
 
         # Create directory if it does not exist
         output_dir = f"Figures/co_sim/{sim_name}"
@@ -235,6 +380,9 @@ class Results:
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.png")
 
+    # endregion
+
+    # region Plot TOPS
 
     def plot_tops_overview(self, sim_name : str, WT : WindTurbine):
         fig, axs = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
@@ -272,3 +420,42 @@ class Results:
     # endregion
 
   
+
+
+    # def plot_vsc_overview(self, sim_name : str, WT : WindTurbine):
+
+    #     fig, axs = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
+
+    #     # WT1 DC Link Voltage
+    #     axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc'], label='WT1 vdc')
+    #     axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc_ref'], label='WT1 vdc_ref')
+    #     axs[0].set_ylabel('vdc (pu)')
+    #     axs[0].legend()
+    #     axs[0].grid(True)
+    #     axs[0].set_title('WT1 DC Link Voltage')
+
+    #     # WT1 Active Power Reference
+    #     axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_gen'], label='WT1 p_ref_gen')
+    #     axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label='WT1 p_e')
+    #     axs[1].set_ylabel('p_ref (pu)')
+    #     axs[1].legend()
+    #     axs[1].grid(True)
+    #     axs[1].set_title('WT1 Active Power Reference')
+
+    #     # WT1 Active Power Reference Adjustment
+    #     axs[2].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_adj'], label='WT1 p_ref_adj')
+    #     axs[2].set_ylabel('p_ref_adj (pu)')
+    #     axs[2].legend()
+    #     axs[2].grid(True)
+    #     axs[2].set_title('WT1 Active Power Reference Adjustment')
+
+    #     plt.xlabel('Time (s)')
+    #     plt.tight_layout()
+    #     # plt.savefig(f"Figures/co_sim/GSC_Overview_{sim_name}.png")
+    #     # plt.show()
+
+    #     # Create directory if it does not exist
+    #     output_dir = f"Figures/co_sim/{sim_name}"
+    #     if not os.path.exists(output_dir):
+    #         os.makedirs(output_dir)
+    #     plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.png")
