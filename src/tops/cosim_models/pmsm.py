@@ -1,6 +1,7 @@
 # region PMSM class
 from tops.cosim_models.pi_controller import PIController_LAH
 from tops.cosim_models.machine_side_converter import MachineSideConverter
+import numpy as np
 
 
 
@@ -25,6 +26,7 @@ class PMSM:
         #     "x_d": 0.4,     # Stator d-axis inductance
         #     "x_q": 0.4,     # Stator q-axis inductance
         #     "Psi_m": 0.9,   # Magnetic flux
+        #     "p": 200,         # Number of poles
         # }
 
         # https://www.nrel.gov/docs/fy20osti/75698.pdf
@@ -51,7 +53,8 @@ class PMSM:
 
         self.i_d = 0.0
         self.i_q = self.i_q_ref
-        self.theta = 0.0
+        self.theta_mech = 0.0
+        self.theta_elec = 0.0
 
     def connect_pmsm(self, msc):
         self.msc = msc
@@ -85,7 +88,7 @@ class PMSM:
         # Motor convention
         dX["i_d"] = (self.msc.v_d - p["rs"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
         dX["i_q"] = (self.msc.v_q - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
-        dX["theta"] = self.speed
+        dX["theta_mech"] = self.speed * self.params["w_n"]    # rad/s
 
         # Speed is here exluded from the derivatives, as it is updated from the FAST FMU
 
@@ -140,8 +143,8 @@ class PMSM:
         from tops.cosim_models.fast import FAST     # Såkalt "lazy import" for å unngå sirkulær import
 
         # Update states from fast FMU
-        self.speed = fast.fmu.getReal([fast.vrs['RotSpeed']])[0] / self.params["w_n"]
-        self.SPEED = self.speed * self.params["w_n"]        # Mulig drit kodepraksis menmen     (rpm)
+        self.speed = fast.fmu.getReal([fast.vrs['GenSpeed']])[0] / self.params["rpm_n"]
+        self.SPEED = self.speed * self.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
 
         # Torque control
         self.update_torque_control(fast)
@@ -151,11 +154,23 @@ class PMSM:
 
         # Calculate the derivatives
         dX = self.derivatives()
+        p = self.params
 
         # # Update the states using Euler integration
         self.i_d += dX["i_d"] * step_size
         self.i_q += dX["i_q"] * step_size
-        self.theta += dX["theta"] * step_size
+        self.theta_mech += dX["theta_mech"] * step_size
+
+
+        # Normalize the mechanical angle to be within 0 and 2*pi
+        self.theta_mech = self.theta_mech % (2 * np.pi)
+
+        if self.theta_mech < 0:
+            self.theta_mech += 2 * np.pi
+
+        # Calculate the electrical angle
+        self.theta_elec = (self.theta_mech * p["Poles"] / 2 ) % (2 * np.pi)
+
 
 
 
