@@ -15,11 +15,11 @@
   - Architecture: 64 bit
   - Precision: double
   - OpenMP: No
-  - Date: Jan 20 2025
-  - Time: 13:27:49
+  - Date: Jan 31 2025
+  - Time: 08:53:05
  Execution Info:
-  - Date: 02/10/2025
-  - Time: 15:45:07+0100
+  - Date: 03/04/2025
+  - Time: 10:15:59+0100
 
  OpenFAST input file heading:
      IEA 15 MW offshore reference model monopile configuration
@@ -30,5 +30,23 @@
  Skipping nodal outputs.
  Running InflowWind.
  Running ServoDyn.
+ Running ServoDyn Interface for Bladed Controllers (using GNU Fortran for Windows).
+ Using legacy Bladed DLL interface.
+ initialising logging channels
+ calling Fill_CONTROL_vars
+ Fill_CONTROL_vars called
+ calling dll
+ dll called
+           2
+ EstWndSpd:L/T;RefGenSpd:A/T
+ logging channels initialised
   Time: 0 of 150 seconds.
-                                                                                                   Time: 10 of 150 seconds.  Estimated final completion at 15:48:08.                                                                                                                                   Time: 20 of 150 seconds.  Estimated final completion at 15:48:07.                                
+                                                                                                   Time: 10 of 150 seconds.  Estimated final completion at 10:19:52.                                                                                                                                   Time: 20 of 150 seconds.  Estimated final completion at 10:20:29.                                                                                                                                   Time: 30 of 150 seconds.  Estimated final completion at 10:20:29.                                                                                                                                  
+  Total Real Time:       69.025 seconds
+  Total CPU Time:        30.688 seconds
+  Simulation CPU Time:   29.078 seconds
+  Simulated Time:        39.99 seconds
+  Time Ratio (Sim/CPU):  1.3753
+
+  OpenFAST completed.
+
