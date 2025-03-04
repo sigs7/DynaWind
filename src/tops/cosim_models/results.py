@@ -34,10 +34,12 @@ class Results:
         self.results[f"{WT.name}_PMSM i_q"].append(WT.pmsm.i_q)
         self.results[f"{WT.name}_PMSM v_d"].append(WT.pmsm.msc.v_d)
         self.results[f"{WT.name}_PMSM v_q"].append(WT.pmsm.msc.v_q)
+        self.results[f"{WT.name}_PMSM_vdc"].append(WT.pmsm.msc.dclink.vdc)
         self.results[f"{WT.name}_PMSM i_q_ref"].append(WT.pmsm.i_q_ref)
         self.results[f"{WT.name}_PMSM i_d_ref"].append(WT.pmsm.i_d_ref)
         self.results[f"{WT.name}_PMSM v_qII"].append(WT.pmsm.v_qII)
         self.results[f"{WT.name}_PMSM v_dII"].append(WT.pmsm.v_dII)
+        self.results[f"{WT.name}_PMSM theta elec"].append(WT.pmsm.theta_elec)
 
 
     def store_msc_results(self, WT : WindTurbine):
@@ -65,6 +67,7 @@ class Results:
         self.results[f"{WT.name}_GSC_i_inj"].append(abs(ps.vsc["GridSideConverter"].i_inj(x, v)[WT.index].copy()))
         self.results[f"{WT.name}_GSC_p_ref_grid"].append(ps.vsc["GridSideConverter"].par["p_ref_grid"][WT.index].copy())
         self.results[f"{WT.name}_GSC_q_ref_grid"].append(ps.vsc["GridSideConverter"].par["q_ref_grid"][WT.index].copy())
+        self.results[f"{WT.name}_GSC_bus_voltage"].append(abs(ps.vsc["GridSideConverter"].v_t(x, v)[WT.index].copy()))
 
 
 
@@ -128,13 +131,28 @@ class Results:
         axs[1, 1].grid(True)
         axs[1, 1].set_title('Generator and PMSM Speed')
 
-        # Second column, third row: Difference between HSShftTq and GenTq
-        diff = np.array(self.results[f'{WT.name}_HSShftTq']) - np.array(self.results[f'{WT.name}_GenTq'])
-        axs[2, 1].plot(self.results['Time'], diff, label='HSShftTq - GenTq')
-        axs[2, 1].set_ylabel('Torque Difference (Nm)')
+        # # Second column, third row: Difference between HSShftTq and GenTq
+        # diff = np.array(self.results[f'{WT.name}_HSShftTq']) - np.array(self.results[f'{WT.name}_GenTq'])
+        # axs[2, 1].plot(self.results['Time'], diff, label='HSShftTq - GenTq')
+        # axs[2, 1].set_ylabel('Torque Difference (Nm)')
+        # axs[2, 1].legend()
+        # axs[2, 1].grid(True)
+        # axs[2, 1].set_title('Torque Difference')
+
+        # # Second column, third row: PMSM theta
+        # axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM theta elec'], label='Theta elec')
+        # axs[2, 1].set_ylabel('Theta (rad)')
+        # axs[2, 1].legend()
+        # axs[2, 1].grid(True)
+        # axs[2, 1].set_title('PMSM Theta Elec')
+        # Second column, third row: PMSM DC-link voltage vs DC-link voltage
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM_vdc'], label='PMSM vdc')
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc'], label='DC vdc')
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc_ref'], label='DC vdc_ref')
+        axs[2, 1].set_ylabel('Voltage (pu)')
         axs[2, 1].legend()
         axs[2, 1].grid(True)
-        axs[2, 1].set_title('Torque Difference')
+        axs[2, 1].set_title('PMSM DC-link Voltage vs DC-link Voltage')
 
         # Set the common xlabel and adjust spacing
         fig.text(0.5, 0.04, 'Time (s)', ha='center')
@@ -321,11 +339,11 @@ class Results:
         axs[1, 1].set_title('GSC Power Reference')
 
         # Second column, third row: DC-link current
-        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_MSC_i_dc'], label='i_dc')
-        axs[2, 1].set_ylabel('Current (pu)')
+        axs[2, 1].plot(self.results['Time'], self.results[f"{WT.name}_MSC_p_e_dq"], label='p_e_msc')
+        axs[2, 1].set_ylabel('Active power (pu)')
         axs[2, 1].legend()
         axs[2, 1].grid(True)
-        axs[2, 1].set_title('DC-link Current')
+        axs[2, 1].set_title('MSC Active Power')
 
         plt.xlabel('Time (s)')
         plt.tight_layout()
@@ -385,29 +403,51 @@ class Results:
     # region Plot TOPS
 
     def plot_tops_overview(self, sim_name : str, WT : WindTurbine):
-        fig, axs = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
+        fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
 
         # Generator speeds
-        axs[0].plot(self.results['Time'], self.results["Generators_speed"], label='Generator speeds')
-        axs[0].set_ylabel('Speed (rpm)')
-        axs[0].legend()
-        axs[0].grid(True)
-        axs[0].set_title('Generator speeds')
+        axs[0, 0].plot(self.results['Time'], self.results["Generators_speed"], label='Generator speeds')
+        axs[0, 0].set_ylabel('Speed (rpm)')
+        axs[0, 0].legend()
+        axs[0, 0].grid(True)
+        axs[0, 0].set_title('Generator speeds')
 
         # Generator current injections
-        axs[1].plot(self.results['Time'], self.results["Generators_p_e"], label='P_e')
-        axs[1].set_ylabel('Active power (pu)')
-        axs[1].legend()
-        axs[1].grid(True)
-        axs[1].set_title('Generators p_e injections')
+        axs[0, 1].plot(self.results['Time'], self.results["Generators_p_e"], label='P_e')
+        axs[0, 1].set_ylabel('Active power (pu)')
+        axs[0, 1].legend()
+        axs[0, 1].grid(True)
+        axs[0, 1].set_title('Generators p_e injections')
 
         # WT GSC p_e
-        axs[2].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label=f'{WT.name} GSC p_e')
-        axs[2].set_ylabel('Power (pu)')
-        axs[2].legend()
-        axs[2].grid(True)
-        axs[2].set_title(f'{WT.name} GSC Active Power')
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label=f'{WT.name} GSC p_e')
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_grid'], label='p_ref_grid')
+        axs[1, 0].set_ylabel('Power (pu)')
+        axs[1, 0].legend()
+        axs[1, 0].grid(True)
+        axs[1, 0].set_title(f'{WT.name} GSC Active Power')
 
+        # Terminal voltage of the bus to which the VSC is connected
+        axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_bus_voltage'], label='Bus Voltage')
+        axs[1, 1].set_ylabel('Voltage (pu)')
+        axs[1, 1].legend()
+        axs[1, 1].grid(True)
+        axs[1, 1].set_title('Bus Terminal Voltage')
+
+        # Reactive power vs reference
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_ref_grid'], label='q_ref_grid')
+        axs[2, 0].set_ylabel('Reactive Power (pu)')
+        axs[2, 0].legend()
+        axs[2, 0].grid(True)
+        axs[2, 0].set_title('Reactive Power vs Reference')
+
+        # Current injection
+        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_i_inj'], label='i_inj')
+        axs[2, 1].set_ylabel('Current (pu)')
+        axs[2, 1].legend()
+        axs[2, 1].grid(True)
+        axs[2, 1].set_title('Current Injection')
 
         plt.xlabel('Time (s)')
         plt.tight_layout()

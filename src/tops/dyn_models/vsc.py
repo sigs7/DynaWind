@@ -292,7 +292,6 @@ class GridSideConverter(DAEModel):
         # dX["vdc"][:] = (par["p_ref_gen"] - self.p_e(x,v)) / (par["Cdc"] * X["vdc"])
         # dX["x_pref_adj"][:] = (X["vdc"] - par["vdc_ref"]) * (par["K_p_dc"] / par["T_i_dc"])
 
-
         return    
 
     def load_flow_pq(self):
@@ -371,9 +370,9 @@ class GridSideConverter(DAEModel):
     #     X = self.local_view(x)
     #     self.par["p_ref_grid"][index] = self.par["p_ref_gen"][index] + self.p_ref_adj(x,v)[index]
 
-    def set_pref_grid(self, x, v, index, pref):
+    def set_pref_grid(self, x, v, index, pref, power_rating):
         X = self.local_view(x)
-        self.par["p_ref_grid"][index] = pref
+        self.par["p_ref_grid"][index] = pref * power_rating*1e-3 / self.par["S_n"]          # MVA / MVA
         # self.par["p_ref_gen"][index] = pref
         # self.par['p_ref_grid'][index] = self.par["p_ref_gen"][index] + self.p_ref_adj(x,v)[index]
 
