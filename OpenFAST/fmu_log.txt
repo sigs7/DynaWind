@@ -1,0 +1,63 @@
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Initialise()
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] CosimFMU() location URI: file:///C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/slprj/_fmu/692be8d4b883339e78e9a0c689bb78e9/fast/resources
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Parsing model description for variable registry: C:/Users/larsi/OpenFAST/OpenFASTFMU2PF_Export/slprj/_fmu/692be8d4b883339e78e9a0c689bb78e9/fast/resources/../modelDescription.xml
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: testNr, 0 -> 1002.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: timeStart, 1 -> 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: Mode, 2 -> 1.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: GenSpdOrTrq, 3 -> 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: GenPwr, 4 -> 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Added real value to registry: ElecPwrCom, 5 -> 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Done parsing model description for variable registry
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetupExperiment
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Model Parameters
+name       : FAST FMU
+description: OpenFAST wind turbine model as FMU for use in power system analysis
+start_time : 0.000000
+end_time   : 150.000000
+time_step  : 0.010000
+
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Entering initialization mode
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Exiting initialization mode
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Exiting initilization mode done
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(6) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(7) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(8) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(9) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(10) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(11) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(12) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(13) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(14) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(15) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(16) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(17) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(18) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(19) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(20) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(3): 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(4): 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(5): 20000.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Entering DoStep m_step=0, newStep=1, communicationStepSize=0.010000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] DoStep Determining internalSteps/waitingSteps at step=0, communicationStepSize=0.010000 dt=0.010000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] DoStep, calculated internalSteps=1, waitingSteps=0
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] DoStep: Step=0 m_time=0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(6) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(7) = -0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(8) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(9) = 11.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(10) = 10.890990
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(11) = 1.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(12) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(13) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(14) = 7.550000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(15) = 7.550000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(16) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(17) = 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(18) = -0.006318
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(19) = -0.759799
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] GetReal(20) = -0.007387
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(3): 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(4): 0.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] SetReal(5): 20000.000000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] Entering DoStep m_step=1, newStep=1, communicationStepSize=0.010000
+[TestInSimulink/OpenFAST FMU/FMU][0][TestInSimulink/OpenFAST FMU/FMU] DoStep: Step=1 m_time=0.010000
