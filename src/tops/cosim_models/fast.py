@@ -48,12 +48,12 @@ class FAST:
 
         self.fmu.setReal([self.vrs['GenSpdOrTrq']], [-pmsm.get_T_e()])
         self.fmu.setReal([self.vrs['GenPwr']], [pmsm.get_P_e()])
-        # if time < :
 
-        self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])
-        
-        # else:
-        #     self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])
+        if time < 25:
+            self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      # Setting a high reference translates to delivering maximum power avaiable
+        else:
+            self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])      # Derating to 10 MW
+
         self.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
     def terminate_fmu(self):

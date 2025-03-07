@@ -39,7 +39,9 @@ class MachineSideConverter:
         v_d_scaled = (self.pmsm.v_d_ctrl * self.dclink.vdc) / self.dclink.vdc_ref
         v_q_scaled = (self.pmsm.v_q_ctrl * self.dclink.vdc) / self.dclink.vdc_ref
 
-        # KOnverter boys forslag
+        # V = Vdc * k0 * m ???
+
+        # Converter boys forslag
         # v_d_scaled = self.pmsm.v_d_ctrl * (self.dclink.vdc_ref - self.dclink.vdc) * K_DC
         # v_q_scaled = self.pmsm.v_q_ctrl * (self.dclink.vdc_ref - self.dclink.vdc) * K_DC
 
@@ -57,12 +59,6 @@ class MachineSideConverter:
 
         return dX
 
-
-    # def derivatives(self):
-    #     dX = {}
-    #     dX["v_d"] = (self.pmsm.v_d_ctrl - self.v_d) * (1/self.T)
-    #     dX["v_q"] = (self.pmsm.v_q_ctrl - self.v_q) * (1/self.T)
-    #     return dX
 
     def step_msc(self, time, step_size):
 
@@ -119,55 +115,3 @@ class MachineSideConverter:
         return -3/2 * (self.pmsm.i_d*self.v_d + self.pmsm.i_q*self.v_q)
 
     
-
-
-    
-# endregion
-
-
-
-    # def set_reference_voltages(self, v_d_ref, v_q_ref):
-    #     self.v_d_ref = v_d_ref
-    #     self.v_q_ref = v_q_ref
-
-
-        # def update_voltages_2(self, v_q_ctrl, v_d_ctrl):
-    #     # Update the reference voltages to the class (makes it easier to access the reference voltages later)
-    #     self.v_q_ref = v_q_ctrl
-    #     self.v_d_ref = v_d_ctrl
-
-    #     self.v_d = self.v_d_ref
-    #     self.v_q = self.v_q_ref
-
-    #     # Need the angle between the reference voltages to calculate the actual voltages
-    #     self.teta = self.safe_arctan(self.v_q_ref , self.v_d_ref)
-
-    #     # Apply the actual voltages
-    #     self.v_q = 0.5 * self.v_q_ref * self.dclink.vdc * np.sin(self.teta)
-    #     self.v_d = 0.5 * self.v_d_ref * self.dclink.vdc * np.cos(self.teta)
-
-    #     # Limit the voltages
-    #     self.v_d = self.clamp_value(self.v_d, 2)
-    #     self.v_q = self.clamp_value(self.v_q, 2)
-
-    # def update_voltages(self, v_d_ctrl, v_q_ctrl, dt):
-    #     # Makes the references easier to access
-    #     self.v_d_ref = v_d_ctrl
-    #     self.v_q_ref = v_q_ctrl
-
-    #     # Apply first-order filter to v_d and v_q
-    #     self.v_d += (1/self.T) * (v_d_ctrl - self.v_d) * dt        # Tsw = 2/3*fsw 
-    #     self.v_q += (1/self.T) * (v_q_ctrl - self.v_q) * dt
-
-    #     # Limit the voltages
-    #     self.v_d = self.clamp_value(self.v_d, min_value=-2, max_value=2)
-    #     self.v_q = self.clamp_value(self.v_q, min_value=-2, max_value=2)
-
-    # def i_dc(self):
-    #     # Need the anlges to correctly calculat the DC-current
-    #     # self.theta = self.safe_arctan(self.v_q , self.v_d )
-    #     self.phi = self.pmsm.theta_elec - self.safe_arctan(self.pmsm.i_q , self.pmsm.i_d)
-
-    #     # Not sure which one to use here...
-    #     # return 0.75 * np.sqrt((self.v_q_ref**2 + self.v_d_ref**2))*abs(np.cos(self.phi))*np.sqrt(self.pmsm.i_d**2 + self.pmsm.i_q**2)
-    #     return 0.75 * (self.v_d * self.pmsm.i_d + self.v_q * self.pmsm.i_q) * np.cos(self.phi)      # This one makes the most sense?

@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     model["vsc"] = {"GridSideConverter": [ 
     ['name',   'bus',    'S_n',      "p_ref_grid",      "q_ref_grid",       "p_ref_gen",         'k_p',      'k_q',    'T_p',     'T_q',     'k_pll',   'T_pll',    'T_i',      "i_max"],
-    ['WT1',    'B1',      50,         0.0,               0.0,                  0.0,                5,          1,        0.1,        0.1,        5,        1,         0.01,      1.2],
+    ['WT1',    'B1',      15,         0.0,               0.0,                  0.0,                5,          1,        0.1,        0.1,        5,        1,         0.01,      1.2],
     ]}
 
     # Power system model
@@ -32,10 +32,10 @@ if __name__ == '__main__':
     x_0 = ps.x_0.copy()
 
     ### SIMULATION SETTINGS ###
-    simulation_name = "Revisited_testing"
+    simulation_name = "Revisited_testing_short"
     t = 0
     dt = 5e-3
-    t_end = 20
+    t_end = 15
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=dt)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Short circuit
-        if t >= 10 and t <= 10.30:
+        if t >= 4 and t <= 4.30:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 1e6
         else:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 0
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         results.store_fmu_results(WT1)
         results.store_pmsm_results(WT1)
         results.store_msc_results(WT1)
-        results.store_dclink_results(WT1)
+        results.store_dclink_results(WT1, ps, x, v)
         results.store_gsc_results(WT1, ps, x, v)
         results.store_generator_results(ps, x, v)
         
@@ -104,5 +104,7 @@ if __name__ == '__main__':
     results.plot_dclink_overview(sim_name=simulation_name, WT = WT1)
     # results.plot_gsc_overview(sim_name=simulation_name, WT = WT1)
     results.plot_tops_overview(sim_name=simulation_name, WT = WT1)
+    results.plot_pmsm_overview_interactive(sim_name=simulation_name, WT = WT1)
+
 
 

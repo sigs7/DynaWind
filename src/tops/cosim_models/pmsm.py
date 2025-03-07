@@ -44,8 +44,8 @@ class PMSM:
         self.torque_ref = 0.0
 
         # Initialize PI controllers for i_d, i_q, and speed with parameters adjusted for a larger timestep
-        self.pi_controller_id = PIController_LAH(kp=1, ti=0.1)
-        self.pi_controller_iq = PIController_LAH(kp=1, ti=0.1)
+        self.pi_controller_id = PIController_LAH(kp=3, ti=0.035)
+        self.pi_controller_iq = PIController_LAH(kp=3, ti=0.035)
 
         # Initiate reference values
         self.i_d_ref = 0.0          # Må kanskje endres senere

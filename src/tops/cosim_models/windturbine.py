@@ -23,13 +23,13 @@ class WindTurbine(FAST, PMSM, DClink, MachineSideConverter, GridSideConverter):
             "s_n" : 15e3,     # 15 000 kW
             "rpm_n" : 0.792*(60/(2*np.pi)),  # Rated speed rpm       # 0.792 rad/s
             "w_n" : 0.792,  # Rated speed rad/s
-            "f_n" : 12.7,    # Rated frequency
+            "f_n" : 12.6,    # Rated frequency
             "U_n" : 4770.34,    # Rated phase voltage
             "I_n" : 1084.55,    # Nominal phase current
             "T_r" : 30e3,                #21.03e3,   # kNm torque         #### NOTE #### Might need to change to Nm      30e3, 
             "rs": 0.03,     # Stator resistance
-            "x_d": 0.4,     # Stator d-axis inductance
-            "x_q": 0.4,     # Stator q-axis inductance
+            "x_d": 0.608,     # Stator d-axis inductance
+            "x_q": 0.608,     # Stator q-axis inductance
             "Psi_m": 0.9,   # Magnetic flux
             "Poles": 200,         # Number of poles
             }
@@ -50,7 +50,7 @@ class WindTurbine(FAST, PMSM, DClink, MachineSideConverter, GridSideConverter):
                 "Cdc": 1.2,                 # Zbase = 4770.34**2 / 15e6 = 1.52      Cbase = 1 / 2pi*f_n*Zbase = 0.0082      Cdc = 0.01 F / 0.0082 = 1.2 
                 "K_p_dc": 4.0,
                 "T_i_dc": 0.1,
-                "chopper_resistance": 1,
+                "chopper_resistance": 2,
             }
 
         self.fast = FAST(FAST_params)

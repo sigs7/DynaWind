@@ -5,6 +5,8 @@ from collections import defaultdict
 from tops.cosim_models.windturbine import WindTurbine
 from tops.dynamic import PowerSystemModel
 import os
+import plotly.graph_objects as go
+import plotly.io as pio
 
 
 
@@ -52,13 +54,16 @@ class Results:
         self.results[f"{WT.name}_MSC_p_e_dc"].append(WT.msc.p_e_dc())
         self.results[f"{WT.name}_MSC_p_e_dq"].append(WT.msc.p_e_dq())
 
-    def store_dclink_results(self, WT : WindTurbine):
+    def store_dclink_results(self, WT : WindTurbine, ps : PowerSystemModel , x, v):
         self.results[f"{WT.name}_DC_vdc"].append(WT.dclink.vdc)
         self.results[f"{WT.name}_DC_vdc_ref"].append(WT.dclink.vdc_ref)
         self.results[f"{WT.name}_DC_i_chopper"].append(WT.dclink.i_chopper())
         self.results[f"{WT.name}_DC_p_adjust"].append(WT.dclink.p_adjust())
         self.results[f"{WT.name}_DC_gsc_p_ref"].append(WT.dclink.gsc_p_ref())
         self.results[f"{WT.name}_DC_duty"].append(WT.dclink.duty())
+        # self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.msc.p_e_dq() - WT.dclink.gsc_p_ref())
+        self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.msc.p_e_dq() - WT.calculate_p_gsc(ps, x, v))
+        self.results[f"{WT.name}_DC_x_pref_adj"].append(WT.dclink.x_pref_adj)
 
 
     def store_gsc_results(self, WT : WindTurbine , ps : PowerSystemModel, x, v):
@@ -164,6 +169,50 @@ class Results:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/PMSM_Overview_{sim_name}.png")
+
+
+    def plot_pmsm_overview_interactive(self, sim_name: str, WT: WindTurbine):
+        fig = go.Figure()
+
+        # First column, first row: PMSM p_e and q_e
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM p_e'], mode='lines', name='p_e'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM q_e'], mode='lines', name='q_e'))
+
+        # First column, second row: PMSM currents
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM i_d'], mode='lines', name='i_d'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM i_q'], mode='lines', name='i_q'))
+
+        # First column, third row: PMSM voltages
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM v_d'], mode='lines', name='v_d'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM v_q'], mode='lines', name='v_q'))
+
+        # Second column, first row: PMSM T_e and T_e_ref
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM T_e'], mode='lines', name='T_e'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM T_e_ref'], mode='lines', name='T_e_ref'))
+
+        # Second column, second row: GenSpeed and PMSM speed
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_GenSpeed'], mode='lines', name='GenSpeed'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM SPEED'], mode='lines', name='PMSM SPEED'))
+
+        # Second column, third row: PMSM DC-link voltage vs DC-link voltage
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_PMSM_vdc'], mode='lines', name='PMSM vdc'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_DC_vdc'], mode='lines', name='DC vdc'))
+        fig.add_trace(go.Scatter(x=self.results['Time'], y=self.results[f'{WT.name}_DC_vdc_ref'], mode='lines', name='DC vdc_ref'))
+
+        # Set the common xlabel and adjust spacing
+        fig.update_layout(title='PMSM Overview', xaxis_title='Time (s)', yaxis_title='Values', legend_title='Legend')
+
+        # Create directory if it does not exist
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
+        # Save the figure as an interactive HTML file
+        pio.write_html(fig, file=f"{output_dir}/PMSM_Overview_{sim_name}.html", auto_open=False)
+        
+
+        # Example usage
+        # plot_pmsm_overview_interactive('simulation_name', wind_turbine_instance)
     
     # endregion
 
@@ -300,7 +349,7 @@ class Results:
     # region Plot DC-link
     
     def plot_dclink_overview(self, sim_name : str, WT : WindTurbine):
-        fig, axs = plt.subplots(3, 2, figsize=(15, 15), sharex=True)
+        fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
 
         # First column, first row: DC-link voltage and reference voltage
         axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc'], label='vdc')
@@ -319,10 +368,14 @@ class Results:
 
         # First column, third row: Power adjustment
         axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust')
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_DC_x_pref_adj'], label='x_pref_adj')
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_MSC_GSC_pe_diff'], label='MSC_GSC_pe_diff')
+        
+        
         axs[2, 0].set_ylabel('Power (pu)')
         axs[2, 0].legend()
         axs[2, 0].grid(True)
-        axs[2, 0].set_title('Power Adjustment')
+        axs[2, 0].set_title('Power Adjustment and Power Difference')
 
         # Second column, first row: Duty cycle
         axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_duty'], label='duty')
@@ -356,7 +409,7 @@ class Results:
 
     # region Plot GSC
     def plot_gsc_overview(self, sim_name : str, WT : WindTurbine):
-        fig, axs = plt.subplots(4, 1, figsize=(15, 20), sharex=True)
+        fig, axs = plt.subplots(4, 1, figsize=(15, 10), sharex=True)
 
         # GSC p_e and p_ref_grid
         axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label='p_e')
