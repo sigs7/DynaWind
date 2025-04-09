@@ -40,7 +40,7 @@ pmsm2 = PMSM(pmsm_params, MSC_params = MSC_params, prime_mover_params = prime_mo
 if __name__ == '__main__':
     # Load model
     # import tops.ps_models.user_ps_models.k2a_vsc as model_data
-    import tops.ps_models.k2a_2WT as model_data
+    import tops.ps_models.k2a_highwind as model_data
     model = model_data.load()
 
     model["vsc"] = {"GridSideConverter": [ 
@@ -107,6 +107,7 @@ if __name__ == '__main__':
 
         pmsm1.update_states(t=t, dt=sol.dt)
         Pref_gen1 = pmsm1.get_Pe()
+
         ps.vsc["GridSideConverter"].set_pref_gen(ref=Pref_gen1, index=0)
         ps.vsc["GridSideConverter"].set_pref_grid(index=0, x=x, v=v)
 

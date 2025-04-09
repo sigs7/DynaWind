@@ -1,6 +1,6 @@
 # region PMSM class
 from tops.cosim_models.pi_controller import PIController_LAH
-from tops.cosim_models.machine_side_converter import MachineSideConverter
+from examples.dyn_models.machine_side_converter import MachineSideConverter
 import numpy as np
 
 
@@ -9,11 +9,11 @@ import numpy as np
 class PMSM:
 
     """
-    Internally Permanent Magnet Synchrnous Machine
+    Permanent Magnet Synchrnous Machine
 
     """
     
-    def __init__(self, pmsm_params : dict):
+    def __init__(self, pmsm_params : dict, fast):
 
         """
         # pmsm_params = {
@@ -22,7 +22,7 @@ class PMSM:
         #     "U_n" : 4770.34,    # Rated phase voltage
         #     "I_n" : 1084.55,    # Nominal phase current
         #     "T_r" : 21.03e3,   # kNm torque        
-        #     "rs": 0.03,     # Stator resistance
+        #     "r_s": 0.03,     # Stator resistance
         #     "x_d": 0.4,     # Stator d-axis inductance
         #     "x_q": 0.4,     # Stator q-axis inductance
         #     "Psi_m": 0.9,   # Magnetic flux
@@ -32,20 +32,21 @@ class PMSM:
         # https://www.nrel.gov/docs/fy20osti/75698.pdf
 
         """
-        
-
+    
         ### Might need to adress an eventuall gearbox ratio
         
         # Assigning the basic parameters of the PMSM
         self.params = pmsm_params
+        p = self.params
 
         # Initiating some basic initial values of operation, should be updated later based of load flow solution
-        self.speed = 0.0
-        self.torque_ref = 0.0
+        self.speed = fast.fmu.getReal([fast.vrs['GenSpeed']])[0] / self.params["rpm_n"]
+        self.SPEED = self.speed * self.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
+        self.torque_ref_raw = fast.fmu.getReal([fast.vrs['GenTq']])[0] / self.params["T_r"]       # Torque reference from FAST FMU in pu
+        self.torque_ref = self.torque_ref_raw
 
-        # Initialize PI controllers for i_d, i_q, and speed with parameters adjusted for a larger timestep
-        self.pi_controller_id = PIController_LAH(kp=3, ti=0.035)
-        self.pi_controller_iq = PIController_LAH(kp=3, ti=0.035)
+        # Initiate starting state
+        self.state = "normal"
 
         # Initiate reference values
         self.i_d_ref = 0.0          # Må kanskje endres senere
@@ -53,11 +54,40 @@ class PMSM:
 
         self.i_d = 0.0
         self.i_q = self.i_q_ref
+
+        self.v_d = 0.0
+        self.v_q = 0.0
+
+        self.v_dII = self.i_q * p["x_q"] * self.speed               
+        self.v_qII = ((self.i_d*p["x_d"]) + p["Psi_m"]) * self.speed
+
         self.theta_mech = 0.0
         self.theta_elec = 0.0
 
-    def connect_pmsm(self, msc):
-        self.msc = msc
+        self.pi_controller_id = PIController_LAH(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
+        self.pi_controller_iq = PIController_LAH(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
+        self.pi_controller_vdc = PIController_LAH(kp=0.5, ki=5, td=0.0, kaw=15.0, output_limit=10)
+
+        # Add a filtered electric power to be fed into turbine controller??
+
+    def connect_dclink(self, dclink):
+        self.dclink = dclink
+
+    # region step
+
+    def step_pmsm(self,dclink, time : float, step_size_elec : float):
+
+            # Update reference voltages using PI controllers
+            self.update_current_control(dclink=dclink, dt=step_size_elec, time=time)
+
+            # Calculate the derivatives
+            dX = self.derivatives()
+
+            # # Update the states using Euler integration
+            self.i_d += dX["i_d"] * step_size_elec
+            self.i_q += dX["i_q"] * step_size_elec
+
+    # endregion
 
     # region Derivatives
 
@@ -66,29 +96,26 @@ class PMSM:
         V3
         From block diagram electric drives PMSM SIMULINK, currents as state variables
 
-        parmas = {% Electrical
-                    r_s   = 0.03; [pu] stator resistance
-                    x_s   = 0.4;  [pu] stator inductance
-                    x_d   = 0.4;  [pu] stator inductance
-                    x_q   = 0.4;  [pu] stator inductance
-                    psi_m = 0.66; [pu] magnetic flux 
-
-                    f_n = 50;       [Hz] nominal frequency
-                    w_n = 2*pi*f_n; [rad/s] nominal frequency
-
-                    % Mechanical
-                    T_m = 0.8; [s] mechanical time constant
-
         """
+
         dX = {}
         p = self.params
-        psi_q = self.i_q*p["x_q"]
-        psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+        # psi_q = self.i_q*p["x_q"]
+        # psi_d = self.i_d*p["x_d"] + p["Psi_m"]
 
-        # Motor convention
-        dX["i_d"] = (self.msc.v_d - p["rs"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
-        dX["i_q"] = (self.msc.v_q - p["rs"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
-        dX["theta_mech"] = self.speed * self.params["w_n"]    # rad/s
+        # # Motor convention
+        # dX["i_d"] = (self.v_d - p["r_s"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
+        # dX["i_q"] = (self.v_q - p["r_s"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
+
+        w_e = self.w_e()
+        L_d = self.L_d()
+        L_q = self.L_q()
+        R_s = p["r_s"]
+
+        dX["i_d"] = (self.v_d - R_s*self.i_d + L_q*self.i_q*self.speed) / L_d
+        dX["i_q"] = (self.v_q - R_s*self.i_q - (L_d*self.i_d + p["Psi_m"])*self.speed) / L_q
+
+
 
         # Speed is here exluded from the derivatives, as it is updated from the FAST FMU
 
@@ -96,81 +123,120 @@ class PMSM:
        
     # endregion
     
-    # region Controll functions
+    # region Current control
 
-    def update_torque_control(self, fast):
-        """
-        Method to update the reference torque based on the speed error
-        Input: dt - time step
-        
-        Output: self.i_q_ref - updated reference q-axis current
-        """
-        # fast.fmu: FMU2Slave
+    def update_current_control(self, dclink, dt, time):
+        p = self.params
 
-        self.torque_ref = -1 * fast.fmu.getReal([fast.vrs['GenTq']])[0]/self.params["T_r"]       # Torque reference from FAST FMU in pu
-
-        # Limit torque reference
-        self.torque_ref = self.clamp_value(self.torque_ref, max_value=0, min_value=-1.5)        
+        # Run the torque reference through the drive control
+        self.torque_ref = self.drive_control(time, dclink, self.torque_ref_raw, dt)
+        self.torque_ref = self.clamp_value(self.torque_ref, max_value=0, min_value=-1.5)
 
         # Calculate the required i_q_ref to produce the needed torque (algebraic)
+        # self.i_q_ref = (2*self.torque_ref) / (3*self.params["Psi_m"]*(self.params["Poles"]/2))
         self.i_q_ref = self.torque_ref / self.params["Psi_m"]
 
-
-    def update_current_control(self, dt):
-        p = self.params
+        self.i_q_ref = self.clamp_value(self.i_q_ref, max_value=1.2, min_value=-1.2)
+        self.i_d_ref = self.clamp_value(self.i_d_ref, max_value=1.2, min_value=-1.2)
 
         # Compute errors
         error_id = (self.i_d_ref - self.i_d)
         error_iq = (self.i_q_ref - self.i_q)
 
         ### Decoupling and current control ###
-        # Compute decoupled voltage control signals
-        self.v_dII = self.i_q * p["x_q"] * self.speed               
-        self.v_qII = ((self.i_d*p["x_d"]) + p["Psi_m"]) * self.speed
+        self.v_dII = self.L_q()*self.i_q*self.w_e()
+        self.v_qII = (self.L_d()*self.i_d + p["Psi_m"])*self.w_e()
+
 
         # I_d current control
-        self.v_d_ctrl = self.pi_controller_id.compute(error_id, dt) - self.v_dII
-        self.v_d_ctrl = self.clamp_value(self.v_d_ctrl, max_value=2, min_value=-2)
+        self.v_d_ctrl = self.pi_controller_id.compute(error_id, dt, time) - self.v_dII
+        # self.v_d_ctrl = self.clamp_value(self.v_d_ctrl, max_value=1.5, min_value=0)
         
         # I_q current control
-        self.v_q_ctrl = self.pi_controller_iq.compute(error_iq, dt) + self.v_qII
-        self.v_q_ctrl = self.clamp_value(self.v_q_ctrl, max_value=2, min_value=-2)
-    
+        self.v_q_ctrl = self.pi_controller_iq.compute(error_iq, dt, time) + self.v_qII
+        # self.v_q_ctrl = self.clamp_value(self.v_q_ctrl, max_value=1.5, min_value=0)
+
+        # Skipping the MSC voltage delay
+        self.v_d = self.v_d_ctrl
+        self.v_q = self.v_q_ctrl
+
     # endregion
 
-    def step_pmsm(self, fast, time : float, step_size : float):
+    # region Drive control
+    def drive_control(self, time, dclink, torque_ref_raw, dt):
+        """
+        Method to control the drive based on current state of the system
 
-        from tops.cosim_models.fast import FAST     # Såkalt "lazy import" for å unngå sirkulær import
+        Input: dclink - DC-link voltage
+               Frequency - grid frequency? 
+        
+        Output: torque_ref - updated torque reference
 
-        # Update states from fast FMU
-        self.speed = fast.fmu.getReal([fast.vrs['GenSpeed']])[0] / self.params["rpm_n"]
-        self.SPEED = self.speed * self.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
-
-        # Torque control
-        self.update_torque_control(fast)
-
-        # Update reference voltages using PI controllers
-        self.update_current_control(step_size)
-
-        # Calculate the derivatives
-        dX = self.derivatives()
-        p = self.params
-
-        # # Update the states using Euler integration
-        self.i_d += dX["i_d"] * step_size
-        self.i_q += dX["i_q"] * step_size
-        self.theta_mech += dX["theta_mech"] * step_size
+        Goal:
+          - Generator controlls the DC-link voltage during fault conditions via regulating the torque
+          - Add ramp rate limiter for the torque reference
+          - Grid supporting capabilities? Inertia emulation - would need grid measurements?
 
 
-        # Normalize the mechanical angle to be within 0 and 2*pi
-        self.theta_mech = self.theta_mech % (2 * np.pi)
+        First step: Find the state of the system to detect faults and determine drive behavior
+        Second step: Alter torque reference based on the state of the system
 
-        if self.theta_mech < 0:
-            self.theta_mech += 2 * np.pi
+        """
 
-        # Calculate the electrical angle
-        self.theta_elec = (self.theta_mech * p["Poles"] / 2 ) % (2 * np.pi)
+        # Configurables
+        vdc = dclink.vdc                                # DC-link voltage [pu]
+        vdc_ref = dclink.params["vdc_ref"]             # Reference voltage for DC-link [pu]
+        vdc_th = dclink.params["chopper_threshold"]     # Threshold voltage for fault detection [pu]
+        hold_duration = 3                             # Duration to hold the reduced torque after fault is cleared [s]
+        ramp_rate_fault = 100                           # Maximum ramp rate for torque reference during fault [pu/s]
+        ramp_rate_hold = 1                          # Maximum ramp rate for torque reference during hold [pu/s]
+        ramp_rate_normal = 2                          # Maximum ramp rate for torque reference during normal operation [pu/s]
 
+
+        # Start by adressing the state of the system
+        # --- Fault detection ---
+        if self.state == "normal":
+            if vdc > vdc_th:
+                self.state = "fault"
+                self.torque_at_fault = torque_ref_raw
+                self.fault_timestamp = time
+                print(f"[{time:.3f}s] FAULT DETECTED")
+
+
+        # --- Fault cleared, enter hold ---    
+        elif self.state == "fault":
+            if vdc <= vdc_th:
+                self.state = "hold"
+                self.hold_start_time = time
+                print(f"[{time:.3f}s] FAULT CLEARED → HOLD")
+
+
+        # --- Hold back to normal operation torque ---
+        elif self.state == "hold":
+            if time - self.hold_start_time > hold_duration:
+                self.state = "normal"
+                print(f"[{time:.3f}s] HOLD FINISHED → NORMAL")
+                
+
+        # Now describe the drive behavior based on state:
+        if self.state == "normal":
+            return self.ramp_to(self.torque_ref, torque_ref_raw, ramp_rate_normal, dt)
+        
+        elif self.state == "fault":
+            # Initiate VDC regulation
+            error_vdc = -(vdc_ref - vdc)
+            self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
+            return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_fault, dt=dt)
+            # return self.ramp_to(self.torque_ref, 0.2*self.torque_at_fault, ramp_rate_fault, dt)
+
+        elif self.state == "hold":
+            # Initiate VDC regulation
+            error_vdc = -(vdc_ref - vdc)
+            self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
+            return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_hold, dt=dt)
+            # return self.ramp_to(self.torque_ref, 0.5*self.torque_at_fault, ramp_rate_hold, dt)
+
+    # endregion
 
 
 
@@ -201,48 +267,122 @@ class PMSM:
             # No clamping needed
             return value
 
+    def ramp_to(self, current_value: float, target_value: float, max_rate: float, dt: float) -> float:
+        """
+        Linearly ramp a value toward a target at a limited rate.
 
-    def get_t_e(self):
-        p = self.params
-        psi_q = self.i_q*p["x_q"]
-        psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+        Parameters:
+        - current_value: the current value (e.g., torque_ref)
+        - target_value: the desired value to reach
+        - max_rate: maximum change per second
+        - dt: simulation timestep in seconds
 
-        return psi_d*self.i_q - psi_q*self.i_d
+        Returns:
+        - new_value: updated value after applying the ramp
+        """
+        delta = target_value - current_value
+        max_delta = max_rate * dt
+
+        if abs(delta) <= max_delta:
+            return target_value
+        else:
+            return current_value + max_delta * (1 if delta > 0 else -1)
+
+    def W_e(self):
+        return self.params["Poles"] * self.params["w_r"] / 2
     
-    def get_T_e(self):
-        return self.get_t_e()*self.params["T_r"]
+    def w_e(self):
+        return self.speed       # equal to speed in pu?
 
-    def get_v_d(self):
-        return self.msc.v_d
+    def L_d(self):
+        return self.params["x_d"] / self.W_e()
+
+    def L_q(self):
+        return self.params["x_q"] / self.W_e() 
+
+    def t_e(self):
+        # p = self.params
+        # psi_q = self.i_q*p["x_q"]
+        # psi_d = self.i_d*p["x_d"] + p["Psi_m"]
+
+        # return psi_d*self.i_q - psi_q*self.i_d
     
-    def get_v_q(self):
-        return self.msc.v_q
+        #  return (3/2) * (self.params["Poles"]/2)*((self.L_d() - self.L_q())*self.i_d + self.params["Psi_m"])*self.i_q
 
-    def get_speed(self):
-        return self.speed
+        return ((self.params["Psi_m"] + (self.speed*self.L_d() - self.speed*self.L_q())*self.i_d))*self.i_q
     
-    def get_p_e(self):
-        return (-3/2)*(self.msc.v_d*self.i_d + self.msc.v_q*self.i_q)      # -3/2 fac to adjust to three-phase power and change direction as injection
-
-    def get_P_e(self):
-        return self.get_p_e()*self.params["s_n"]
-
-    def get_q_e(self):
-        return (-3/2)*(self.msc.v_q*self.i_d - self.msc.v_d*self.i_q)      # 3/2 fac?
+    def T_e(self):
+        return self.t_e()*self.params["T_r"]
     
-    def get_Q_e(self):
-        return self.get_q_e()*self.params["s_n"]
+    def p_e(self):
+        return -1*(self.v_d*self.i_d + self.v_q*self.i_q)      # -3/2 fac?? to adjust to three-phase power and change direction as injection
 
-    def get_Pm(self):
-        return self.speed * self.primemover.torque
+    def P_e(self):
+        return self.p_e()*self.params["s_n"]
+    
+    def q_e(self):
+        return -1*(self.v_q*self.i_d - self.v_d*self.i_q)      # 3/2 fac?
+    
+    def Q_e(self):
+        return self.q_e()*self.params["s_n"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # endregion
 
+    # region Old code
+    # def step_pmsm(self, fast, time : float, step_size_elec : float):
 
-    def set_converter_voltages(self, v_d_ctrl, v_q_ctrl, dt):
+    #     from tops.cosim_models.fast import FAST     # Såkalt "lazy import" for å unngå sirkulær import
+
+    #     # Update states from fast FMU
+    #     self.speed = fast.fmu.getReal([fast.vrs['GenSpeed']])[0] / self.params["rpm_n"]
+    #     self.SPEED = self.speed * self.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
+
+    #     # Torque control
+    #     self.update_torque_control(fast)
+
+    #     # Update reference voltages using PI controllers
+    #     self.update_current_control(dt=step_size_elec, time=time)
+
+    #     # Calculate the derivatives
+    #     dX = self.derivatives()
+    #     p = self.params
+
+    #     # # Update the states using Euler integration
+    #     self.i_d += dX["i_d"] * step_size_elec
+    #     self.i_q += dX["i_q"] * step_size_elec
+    #     self.theta_mech += dX["theta_mech"] * step_size_elec
+
+
+    #     # Normalize the mechanical angle to be within 0 and 2*pi
+    #     self.theta_mech = self.theta_mech % (2 * np.pi)
+
+    #     if self.theta_mech < 0:
+    #         self.theta_mech += 2 * np.pi
+
+    #     # Calculate the electrical angle
+    #     self.theta_elec = (self.theta_mech * p["Poles"] / 2 ) % (2 * np.pi)
+
     # def set_converter_voltages(self, v_d_ctrl, v_q_ctrl, dt):
-        # self.converter.set_reference_voltages(v_d_ctrl, v_q_ctrl)
-        # self.msc.v_d_ref = v_d_ctrl
-        # self.msc.v_q_ref = v_q_ctrl
-        # self.msc.apply_voltages(v_d_ctrl, v_q_ctrl)
-        self.msc.update_voltages(v_d_ctrl, v_q_ctrl, dt)
+    # # def set_converter_voltages(self, v_d_ctrl, v_q_ctrl, dt):
+    #     # self.converter.set_reference_voltages(v_d_ctrl, v_q_ctrl)
+    #     # self.msc.v_d_ref = v_d_ctrl
+    #     # self.msc.v_q_ref = v_q_ctrl
+    #     # self.msc.apply_voltages(v_d_ctrl, v_q_ctrl)
+    #     self.msc.update_voltages(v_d_ctrl, v_q_ctrl, dt)
