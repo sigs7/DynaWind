@@ -50,17 +50,17 @@ class DClink():
 
         
     def gsc_p_ref(self):
-        if self.pmsm.state == "fault" or self.pmsm.state == "hold":     # During fault, the power balance is handled by the PMSM
-            return max(0.0, self.pmsm.p_e())
-
-        
+        # if self.pmsm.state == "fault" or self.pmsm.state == "hold":     # During fault, the power balance is handled by the PMSM
+        #     return max(0.0, self.pmsm.p_e())
+        # else:
+        #     return max(0.0, self.pmsm.p_e() + self.p_adjust()) # - (self.vdc * self.i_chopper())
         return max(0.0, self.pmsm.p_e() + self.p_adjust()) # - (self.vdc * self.i_chopper())
-        
+
         
     def duty(self):
         vdc = self.vdc
         vth = self.params["chopper_threshold"]  # Should be 1.05
-        max_duty = 1                          # To limit current spikes
+        max_duty = 1                            # To limit current spikes
         k_slope = 15.0                          # Duty increases 0 → max over 0.1 pu (e.g., 1.05 to 1.15)
 
         if vdc > vth:
@@ -79,7 +79,7 @@ class DClink():
 
         if self.chopper_on:
             self.chopper_timer -= step_size
-            if self.chopper_timer <= 0 or self.vdc <= 1.05:
+            if self.chopper_timer <= 0 or self.vdc <= self.params["chopper_threshold"]:
                 self.chopper_on = False
 
     #     # # Debug prints

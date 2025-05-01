@@ -41,14 +41,21 @@ class FAST:
         fmu.exitInitializationMode()
         
         return fmu, vrs
+    
+    def connect_fmu(self, wind_turbine):
+        self.wind_turbine = wind_turbine
 
-    def step_fmu(self, pmsm, time: float, step_size: float):
+    def step_fmu(self, pmsm, ps, v, x, time: float, step_size: float):
 
         from tops.cosim_models.pmsm import PMSM  # Lazy import to avoid circular import
 
         self.fmu.setReal([self.vrs['GenSpdOrTrq']], [-pmsm.T_e()])
-        self.fmu.setReal([self.vrs['GenPwr']], [pmsm.P_e()])
-        # self.fmu.setReal([self.vrs['GenPwr']], [ps.vsc["GridSideConverter_PQ"].p_e(x,v)[index] * ps.vsc["GridSideConverter_PQ"].par["S_n"][index] * 1e3]) 
+        # self.fmu.setReal([self.vrs['GenPwr']], [pmsm.P_e()])
+        if self.wind_turbine.gsc_control == "PV":
+            self.fmu.setReal([self.vrs['GenPwr']], [ps.vsc["GridSideConverter_PV"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PV"].par["S_n"][self.wind_turbine.index] * 1e3])
+        if self.wind_turbine.gsc_control == "PQ":
+            self.fmu.setReal([self.vrs['GenPwr']], [ps.vsc["GridSideConverter_PQ"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PQ"].par["S_n"][self.wind_turbine.index] * 1e3])
+        
 
         # Set Torque reference to pmsm in mechanical timestep
         pmsm.torque_ref_raw = -1 * self.fmu.getReal([self.vrs['GenTq']])[0]/pmsm.params["T_r"]       # Torque reference from FAST FMU in pu
@@ -61,18 +68,20 @@ class FAST:
         pmsm.SPEED = pmsm.speed * pmsm.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
 
 
-        # Maximum power
+        # # Maximum power
         self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])
 
         # # Derating 
         # if time < 8:
         #     self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      # Setting a high reference translates to delivering maximum power avaiable
-        # elif 8.01 < time < 16:
+        # elif 8.01 < time < 12:
         #     self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])      # Derating to 10 MW
         # else:
         #     self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      
 
         self.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
+        
 
     def terminate_fmu(self):
         self.fmu.terminate()

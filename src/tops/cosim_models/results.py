@@ -24,7 +24,8 @@ class Results:
     def store_fmu_results(self, WT : WindTurbine):
         for key, value in WT.fast.vrs.items():
             self.results[f"{WT.name}_{key}"].append(WT.fast.fmu.getReal([value])[0])
-        
+
+    # region store pmsm    
     def store_pmsm_results(self, WT : WindTurbine):
         self.results[f"{WT.name}_PMSM T_e"].append(WT.pmsm.T_e())
         self.results[f"{WT.name}_PMSM T_e_ref"].append(WT.pmsm.torque_ref * WT.pmsm.params["T_r"])
@@ -39,7 +40,6 @@ class Results:
         self.results[f"{WT.name}_PMSM i_q"].append(WT.pmsm.i_q)
         self.results[f"{WT.name}_PMSM v_d"].append(WT.pmsm.v_d)
         self.results[f"{WT.name}_PMSM v_q"].append(WT.pmsm.v_q)
-        # self.results[f"{WT.name}_PMSM_vdc"].append(WT.pmsm.dclink.vdc)
         self.results[f"{WT.name}_PMSM i_q_ref"].append(WT.pmsm.i_q_ref)
         self.results[f"{WT.name}_PMSM i_d_ref"].append(WT.pmsm.i_d_ref)
         self.results[f"{WT.name}_PMSM v_qII"].append(WT.pmsm.v_qII)
@@ -51,19 +51,11 @@ class Results:
         self.results[f"{WT.name}_PMSM vdc_controller P_term"].append(WT.pmsm.pi_controller_vdc.P_term)
         self.results[f"{WT.name}_PMSM vdc_controller I_term"].append(WT.pmsm.pi_controller_vdc.I_term)
         self.results[f"{WT.name}_PMSM vdc_controller D_term"].append(WT.pmsm.pi_controller_vdc.D_term)
+        self.results[f"{WT.name}_PMSM P_mech"].append(WT.pmsm.P_mech())
+    
+    # endregion
 
-
-
-    # def store_msc_results(self, WT : WindTurbine):
-    #     self.results[f"{WT.name}_MSC_v_q"].append(WT.v_q)
-    #     self.results[f"{WT.name}_MSC_v_d"].append(WT.msc.v_d)
-    #     self.results[f"{WT.name}_MSC_v_q_ctrl"].append(WT.msc.pmsm.v_q_ctrl)
-    #     self.results[f"{WT.name}_MSC_v_d_ctrl"].append(WT.msc.pmsm.v_d_ctrl)
-    #     self.results[f"{WT.name}_MSC_i_dc"].append(WT.msc.i_dc())
-    #     self.results[f"{WT.name}_MSC_v_dc"].append(WT.msc.dclink.vdc)
-    #     self.results[f"{WT.name}_MSC_p_e_dc"].append(WT.msc.p_e_dc())
-    #     self.results[f"{WT.name}_MSC_p_e_dq"].append(WT.msc.p_e_dq())
-
+    # region store DClink
     def store_dclink_results(self, WT : WindTurbine, ps : PowerSystemModel , x, v):
         self.results[f"{WT.name}_DC_vdc"].append(WT.dclink.vdc)
         self.results[f"{WT.name}_DC_vdc_ref"].append(WT.dclink.vdc_ref)
@@ -76,8 +68,9 @@ class Results:
         # self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.msc.p_e_dq() - WT.dclink.gsc_p_ref())
         self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.pmsm.p_e() - WT.calculate_p_gsc(ps, x, v))
         self.results[f"{WT.name}_DC_x_pref_adj"].append(WT.dclink.x_pref_adj)
+    # endregion
 
-
+    # region store PQ
     def store_gsc_results_PQ(self, WT : WindTurbine , ps : PowerSystemModel, x, v):
         self.results[f"{WT.name}_GSC_p_e"].append(ps.vsc["GridSideConverter_PQ"].p_e(x, v)[WT.index].copy())
         self.results[f"{WT.name}_GSC_q_e"].append(ps.vsc["GridSideConverter_PQ"].q_e(x, v)[WT.index].copy())
@@ -85,18 +78,22 @@ class Results:
         self.results[f"{WT.name}_GSC_p_ref_grid"].append(ps.vsc["GridSideConverter_PQ"].par["p_ref_grid"][WT.index].copy())
         self.results[f"{WT.name}_GSC_q_ref_grid"].append(ps.vsc["GridSideConverter_PQ"].par["q_ref_grid"][WT.index].copy())
         self.results[f"{WT.name}_GSC_bus_voltage"].append(abs(ps.vsc["GridSideConverter_PQ"].v_t(x, v)[WT.index].copy()))
-        
+    # endregion
 
+    # region store PV
     def store_gsc_results_PV(self, WT : WindTurbine , ps : PowerSystemModel, x, v):
         self.results[f"{WT.name}_GSC_p_e"].append(ps.vsc["GridSideConverter_PV"].p_e(x, v)[WT.index].copy())
         self.results[f"{WT.name}_GSC_q_e"].append(ps.vsc["GridSideConverter_PV"].q_e(x, v)[WT.index].copy())
         self.results[f"{WT.name}_GSC_i_inj"].append(abs(ps.vsc["GridSideConverter_PV"].i_inj(x, v)[WT.index].copy()))
         self.results[f"{WT.name}_GSC_p_ref_grid"].append(ps.vsc["GridSideConverter_PV"].par["p_ref_grid"][WT.index].copy())
+        # self.results[f"{WT.name}_GSC_q_ref_grid"].append(ps.vsc["GridSideConverter_PV"].q_ref_grid[WT.index].copy())
         self.results[f"{WT.name}_GSC_v_ref_grid"].append(ps.vsc["GridSideConverter_PV"].par["v_ref_grid"][WT.index].copy())
         self.results[f"{WT.name}_GSC_bus_voltage"].append(abs(ps.vsc["GridSideConverter_PV"].v_t(x, v)[WT.index].copy()))
+        self.results[f"{WT.name}_GSC_q_ref_grid"].append(ps.vsc["GridSideConverter_PV"].q_ref_grid(x, v)[WT.index].copy())
+    # endregion
 
 
-
+    # region store generator
     def store_generator_results(self, ps : PowerSystemModel, x, v, index = None):
         if index is not None:
             self.results[f"Generator_{index}_speed"].append(ps.gen['GEN'].speed(x, v)[index].copy())
@@ -114,7 +111,7 @@ class Results:
 
     # region Plot PMSM
 
-    def plot_pmsm_overview(self, sim_name : str, WT : WindTurbine):
+    def plot_pmsm_overview(self, sim_name : str, WT : WindTurbine, t_init : float = None):
         fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True)
 
 
@@ -164,30 +161,6 @@ class Results:
         axs[1, 1].grid(True)
         axs[1, 1].set_title('Generator and PMSM Speed')
 
-        # Second column, third row: Difference between HSShftTq and GenTq
-        # diff = np.array(self.results[f'{WT.name}_GenTq']) - np.array(self.results[f'{WT.name}_GenSpdOrTrq'])
-        # axs[2, 1].plot(self.results['Time elec'], diff, label='GenTq - GenSpdOrTrq')
-        # axs[2, 1].set_ylabel('Torque Difference (Nm)')
-        # axs[2, 1].legend()
-        # axs[2, 1].grid(True)
-        # axs[2, 1].set_title('Torque Difference')
-
-        # # Second column, third row: PMSM theta
-        # axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM theta elec'], label='Theta elec')
-        # axs[2, 1].set_ylabel('Theta (rad)')
-        # axs[2, 1].legend()
-        # axs[2, 1].grid(True)
-        # axs[2, 1].set_title('PMSM Theta Elec')
-        # Second column, third row: PMSM DC-link voltage vs DC-link voltage
-        # axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_PMSM_vdc'], label='PMSM vdc')
-
-        # axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc'], label='DC vdc')
-        # axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_DC_vdc_ref'], label='DC vdc_ref')
-        # axs[2, 1].set_ylabel('Voltage (pu)')
-        # axs[2, 1].legend()
-        # axs[2, 1].grid(True)
-        # axs[2, 1].set_title('PMSM DC-link Voltage vs DC-link Voltage')
-
         # Second column, third row: Current controller feedforward terms
         axs[2, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_PMSM v_qII'], label='v_qII')
         axs[2, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_PMSM v_dII'], label='v_dII')
@@ -201,11 +174,19 @@ class Results:
         plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
         # plt.savefig(f"Figures/co_sim/PMSM_Overview_{sim_name}.png")
 
+        # Set the x-axis limit if t_init is provided
+        if t_init is not None:
+            plt.xlim(left=t_init)
+
+        # Set the common xlabel and adjust spacing
+        fig.text(0.5, 0.04, 'Time (s)', ha='center')
+        plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
+
         # Create directory if it does not exist
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/PMSM_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/PMSM_Overview_{sim_name}.pdf", format='pdf')
 
 
     def plot_pmsm_overview_interactive(self, sim_name: str, WT: WindTurbine):
@@ -324,7 +305,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/FMU_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/FMU_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion    
         
@@ -390,7 +371,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/MSC_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/MSC_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -455,7 +436,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/DClink_Overview_{sim_name}.pdf", format='pdf')
 
     # region Plot GSC
     def plot_gsc_overview(self, sim_name : str, WT : WindTurbine):
@@ -499,7 +480,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -534,33 +515,35 @@ class Results:
         if WT.gsc_control == "PV":
             axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_v_ref_grid'], label='Bus Voltage Reference')
         axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_bus_voltage'], label='Bus Voltage')
+        # axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_v_d'], label='v_d')
+        # axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_v_q'], label='v_q')
         axs[1, 1].set_ylabel('Voltage (pu)')
         axs[1, 1].legend()
         axs[1, 1].grid(True)
         axs[1, 1].set_title('Bus Terminal Voltage')
 
+        # Current injection
+        axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_i_inj'], label='i_inj')
+        axs[2, 0].set_ylabel('Current (pu)')
+        axs[2, 0].legend()
+        axs[2, 0].grid(True)
+        axs[2, 0].set_title('Current Injection')
+
         # Reactive power vs reference
         if WT.gsc_control == "PQ":
-            axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_ref_grid'], label='q_ref_grid')
-            axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
-            axs[2, 0].set_ylabel('Reactive Power (pu)')
-            axs[2, 0].legend()
-            axs[2, 0].grid(True)
-            axs[2, 0].set_title('Reactive Power vs Reference')
+            axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_ref_grid'], label='q_ref_grid')
+            axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
+            axs[2, 1].set_ylabel('Reactive Power (pu)')
+            axs[2, 1].legend()
+            axs[2, 1].grid(True)
+            axs[2, 1].set_title('Reactive Power vs Reference')
         elif WT.gsc_control == "PV":
-            axs[2, 0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
-            axs[2, 0].set_ylabel('Reactive Power (pu)')
-            axs[2, 0].legend()
-            axs[2, 0].grid(True)
-            axs[2, 0].set_title('Reactive Power')
-
-
-        # Current injection
-        axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_i_inj'], label='i_inj')
-        axs[2, 1].set_ylabel('Current (pu)')
-        axs[2, 1].legend()
-        axs[2, 1].grid(True)
-        axs[2, 1].set_title('Current Injection')
+            axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_e'], label='q_e')
+            axs[2, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_q_ref_grid'], label='q_ref_grid')
+            axs[2, 1].set_ylabel('Reactive Power (pu)')
+            axs[2, 1].legend()
+            axs[2, 1].grid(True)
+            axs[2, 1].set_title('Reactive Power')
 
         plt.xlabel('Time (s)')
         plt.tight_layout()
@@ -569,7 +552,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/TOPS_Overview_{sim_name}.png")
+        plt.savefig(f"{output_dir}/TOPS_Overview_{sim_name}.pdf", format='pdf')
     # endregion
 
     # region Plot Controllers
@@ -604,7 +587,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/Controllers_{sim_name}.png")
+        plt.savefig(f"{output_dir}/Controllers_{sim_name}.pdf", format='pdf')
 
 
     def plot_vdc_controller_terms(self, sim_name: str, WT: WindTurbine):
@@ -638,7 +621,7 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/VDC_Controller_{sim_name}.png")
+        plt.savefig(f"{output_dir}/VDC_Controller_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -679,44 +662,404 @@ class Results:
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/PMSM_{sim_name}.png")
+        plt.savefig(f"{output_dir}/PMSM_{sim_name}.pdf", format='pdf')
+
+
+    # region generator torque
+    def plot_generator_torque(self, sim_name: str, WT: WindTurbine):
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Plot generator torque and reference torque
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_GenTq'], label='Generator Torque', linewidth=2)
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Reference Torque', linestyle='--', linewidth=2)
+
+        # Set axis labels with larger font size
+        ax.set_ylabel('Torque (kNm)', fontsize=14)
+        ax.set_xlabel('Time (s)', fontsize=14)
+
+        # Set title with larger font size
+        ax.set_title('Generator Torque vs Reference', fontsize=16)
+
+        # Increase tick label size
+        ax.tick_params(axis='both', which='major', labelsize=12)
+
+        # Enable both major and minor grids
+        ax.grid(True, which='both', linestyle=':', linewidth=0.8)
+
+        # Add a clearer legend
+        ax.legend(fontsize=12, frameon=True, loc='upper left')
+
+        # Adjust layout for publication quality
+        plt.tight_layout()
+
+        # Create directory if it does not exist
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/Generator_Torque_{sim_name}.pdf", format='pdf')
+    # endregion
+
+    # region fmugen
+    def plot_paper_fmugen(self, sim_name: str, WT: WindTurbine):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import numpy as np
+        import os
+
+        # Use Times New Roman globally
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
+        lw = 2.0  # Line width
+
+        # (1,1) Generator torque vs reference
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenTq'], label='Generator Torque', linewidth=lw)
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Reference Torque', linestyle='--', linewidth=lw)
+        
+        axs[0, 0].set_ylabel('Torque (kNm)')
+        axs[0, 0].legend(fontsize=8)
+        axs[0, 0].grid(True, linestyle=':')
+        axs[0, 0].set_title('Generator Torque vs Reference', fontsize=10)
+
+        # (1,2) Power overview
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GenPwr'], label='Electric Power GSC', linewidth=lw)
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_ElecPwrCom'], label='Electric Power Command', linewidth=lw)
+        axs[0, 1].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GenTq']) * np.array(self.results[f'{WT.name}_GenSpeed']) * (2 * np.pi / 60), label='Mechanical Power OpenFAST', linestyle=':', linewidth=lw)
+        # axs[0, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_PMSM P_mech'], label='Mechanical Power PMSM', linewidth=lw)
+        # axs[0, 1].plot(self.results['Time elec'], np.array(self.results[f'{WT.name}_PMSM P_e']), label='PMSM Active Power', linewidth=lw)
+        axs[0, 1].set_ylabel('Power (kW)')
+        axs[0, 1].legend(fontsize=8)
+        axs[0, 1].grid(True, linestyle=':')
+        axs[0, 1].set_title('Power Overview', fontsize=10)
+
+        # (2,1) Speed overview
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpeed'], label='Generator Speed', linewidth=lw)
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_RotSpeed'], label='Rotor Speed', linewidth=lw)
+        axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_RefGenSpd'], label='RefGenSpeed', linestyle='--', linewidth=lw)
+        axs[1, 0].set_ylabel('Speed (rpm)')
+        axs[1, 0].legend(fontsize=8)
+        axs[1, 0].grid(True, linestyle=':')
+        axs[1, 0].set_title('Speed Overview', fontsize=10)
+
+        # (2,2) Blade pitch
+        axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_BldPitch1'], label='Blade Pitch', linewidth=lw)
+        axs[1, 1].set_ylabel('Pitch (deg)')
+        axs[1, 1].legend(fontsize=8)
+        axs[1, 1].grid(True, linestyle=':')
+        axs[1, 1].set_title('Blade Pitch', fontsize=10)
+
+        # Common X label
+        fig.text(0.5, 0.02, 'Time (s)', ha='center', fontsize=12)
+
+        # Ticks and layout
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
+
+        # Save
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/FMUgen_paper_{sim_name}.pdf", format='pdf')
+
+    # endregion
+
+    # region gscgrid
+    def plot_paper_gscgrid(self, sim_name: str, WT: WindTurbine, ps: PowerSystemModel):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import numpy as np
+        import os
+
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
+        lw = 2.0
+
+        gsc_nominal_power_mw = WT.gsc_sn
+        tops_nominal_power_mw = ps.s_n
+
+        # (1,1) GSC active power
+        axs[0, 0].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_p_e']) * gsc_nominal_power_mw, label='GSC Active Power', linewidth=lw)
+        axs[0, 0].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_p_ref_grid']) * gsc_nominal_power_mw, label='GSC Active Power Reference', linestyle='--', linewidth=lw)
+        axs[0, 0].set_ylabel('Active Power (MW)')
+        axs[0, 0].legend(fontsize=8)
+        axs[0, 0].grid(True, linestyle=':')
+        axs[0, 0].set_title('GSC Active Power', fontsize=10)
+
+        # (1,2) GSC bus voltage
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_bus_voltage'], label='Bus Voltage', linewidth=lw)
+        axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_v_ref_grid'], label='Voltage Reference', linestyle='--', linewidth=lw)
+        axs[0, 1].set_ylabel('Voltage (pu)')
+        axs[0, 1].legend(fontsize=8)
+        axs[0, 1].grid(True, linestyle=':')
+        axs[0, 1].set_title('GSC Bus Voltage', fontsize=10)
+
+        # (2,1) Generator p_e injections
+        axs[1, 0].plot(self.results['Time'], np.array(self.results["Generators_p_e"]) * tops_nominal_power_mw, 
+                    label='Generators Active Power', linewidth=lw)
+        axs[1, 0].set_ylabel('Active Power (MW)')
+        axs[1, 0].legend(fontsize=8)
+        axs[1, 0].grid(True, linestyle=':')
+        axs[1, 0].set_title('Generators Active Power Injections', fontsize=10)
+
+        # (2,2) Reactive power
+        axs[1, 1].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_q_e']) * gsc_nominal_power_mw, 
+                    label='GSC Reactive Power', linewidth=lw)
+        axs[1, 1].set_ylabel('Reactive Power (MW)')
+        axs[1, 1].legend(fontsize=8)
+        axs[1, 1].grid(True, linestyle=':')
+        axs[1, 1].set_title('GSC Reactive Power', fontsize=10)
+
+        fig.text(0.5, 0.02, 'Time (s)', ha='center', fontsize=12)
+
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
+
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/GSCgrid_paper_{sim_name}.pdf", format='pdf')
+
+
+    # endregion
+
+    # region dclink
+
+    def plot_paper_dclink(self, sim_name: str, WT: WindTurbine):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import os
+
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+        lw = 2.0
+
+        # (1,1) DC-link voltage and reference
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
+        axs[0].set_ylabel('Voltage (pu)')
+        axs[0].legend(fontsize=8)
+        axs[0].grid(True, linestyle=':')
+        axs[0].set_title('DC-link Voltage vs Reference', fontsize=10)
+
+        # (2,1) Power adjustment
+        axs[1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
+        axs[1].set_ylabel('Power (pu)')
+        axs[1].legend(fontsize=8)
+        axs[1].grid(True, linestyle=':')
+        axs[1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
+
+        axs[1].set_xlabel('Time (s)', fontsize=12)
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
+
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/DClink_paper_{sim_name}.pdf", format='pdf')
+
+
+    # endregion
+    def plot_paper_dclink_2x2(self, sim_name: str, WT: WindTurbine):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import os
+
+        # Use Times New Roman globally
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
+        lw = 2.0  # Line width
+
+        # (1,1) DC-link voltage and reference
+        axs[0, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
+        axs[0, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
+        axs[0, 0].set_ylabel('Voltage (pu)')
+        axs[0, 0].legend(fontsize=8)
+        axs[0, 0].grid(True, linestyle=':')
+        axs[0, 0].set_title('DC-link Voltage vs Reference', fontsize=10)
+
+        # (1,2) Power adjustment
+        axs[0, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
+        axs[0, 1].set_ylabel('Power (pu)')
+        axs[0, 1].legend(fontsize=8)
+        axs[0, 1].grid(True, linestyle=':')
+        axs[0, 1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
+
+        # (2,1) Chopper duty cycle
+        axs[1, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_duty'], label='Duty Cycle', linewidth=lw)
+        axs[1, 0].set_ylabel('Duty Cycle (pu)')
+        axs[1, 0].legend(fontsize=8)
+        axs[1, 0].grid(True, linestyle=':')
+        axs[1, 0].set_title('Chopper Duty Cycle', fontsize=10)
+
+        # (2,2) Chopper current
+        axs[1, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_i_chopper'], label='Chopper Current', linewidth=lw)
+        axs[1, 1].set_ylabel('Current (pu)')
+        axs[1, 1].legend(fontsize=8)
+        axs[1, 1].grid(True, linestyle=':')
+        axs[1, 1].set_title('Chopper Current', fontsize=10)
+
+        # Common X label
+        fig.text(0.5, 0.02, 'Time (s)', ha='center', fontsize=12)
+
+        # Ticks and layout
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
+
+        # Save
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/DClink_2x2_paper_{sim_name}.pdf", format='pdf')
+
+
+    def plot_paper_dclink_3x1(self, sim_name: str, WT: WindTurbine):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import os
+        # Use Times New Roman globally
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(3, 1, figsize=(5, 9), sharex=True)
+        lw = 2.0  # Line width
+
+        # (1,1) DC-link voltage and reference
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
+        axs[0].set_ylabel('Voltage (pu)')
+        axs[0].legend(fontsize=8)
+        axs[0].grid(True, linestyle=':')
+        axs[0].set_title('DC-link Voltage vs Reference', fontsize=10)
+
+        # (2,1) Power adjustment
+        axs[1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
+        axs[1].set_ylabel('Power (pu)')
+        axs[1].legend(fontsize=8)
+        axs[1].grid(True, linestyle=':')
+        axs[1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
+
+        # (3,1) Chopper current
+        axs[2].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_i_chopper'], label='Chopper Current', linewidth=lw)
+        axs[2].set_ylabel('Current (pu)')
+        axs[2].legend(fontsize=8)
+        axs[2].grid(True, linestyle=':')
+        axs[2].set_title('Chopper Current', fontsize=10)
+
+        # Common X label
+        axs[2].set_xlabel('Time (s)', fontsize=12)
+
+        # Ticks and layout
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
+
+        # Save
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/DClink_3x1_paper_{sim_name}.pdf", format='pdf')
+
+
+    # region OpenFAST vs Generator Torque
+    def plot_openfast_vs_generator_torque(self, sim_name: str, WT: WindTurbine):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        import os
+
+        # Use Times New Roman globally
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        lw = 2.0  # Line width
+
+        # Plot OpenFAST turbine torque and generator torque
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Generator Torque (kNm)', linewidth=lw)
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_HSShftTq'], label='OpenFAST Turbine Torque (kNm)', linestyle='--', linewidth=lw)
+
+        # Set axis labels with larger font size
+        ax.set_ylabel('Torque (kNm)', fontsize=14)
+        ax.set_xlabel('Time (s)', fontsize=14)
+
+        # Set title with larger font size
+        ax.set_title('OpenFAST Turbine Torque vs Generator Torque', fontsize=16)
+
+        # Increase tick label size
+        ax.tick_params(axis='both', which='major', labelsize=12)
+
+        # Enable both major and minor grids
+        ax.grid(True, which='both', linestyle=':', linewidth=0.8)
+
+        # Add a clearer legend
+        ax.legend(fontsize=12, frameon=True, loc='upper left')
+
+        # Adjust layout for publication quality
+        plt.tight_layout()
+
+        # Create directory if it does not exist
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/OpenFAST_vs_Generator_Torque_{sim_name}.pdf", format='pdf')
+    # endregion
 
 
 
-    # def plot_vsc_overview(self, sim_name : str, WT : WindTurbine):
+        # region Multi-rate visualization
+        # region Multi-rate visualization
+    def plot_multirate_torque(self, sim_name: str, WT: WindTurbine, step_size_mech: float, step_size_elec: float):
+        import matplotlib.pyplot as plt
+        import os
+        import numpy as np
+        import matplotlib as mpl
 
-    #     fig, axs = plt.subplots(3, 1, figsize=(15, 15), sharex=True)
+        # Load data
+        time_elec = np.array(self.results["Time elec"])
+        te = np.array(self.results[f"{WT.name}_PMSM T_e"])
+        te_ref = np.array(self.results[f"{WT.name}_PMSM T_e_ref"])
 
-    #     # WT1 DC Link Voltage
-    #     axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc'], label='WT1 vdc')
-    #     axs[0].plot(self.results['Time'], self.results[f'{WT.name}_GSC_vdc_ref'], label='WT1 vdc_ref')
-    #     axs[0].set_ylabel('vdc (pu)')
-    #     axs[0].legend()
-    #     axs[0].grid(True)
-    #     axs[0].set_title('WT1 DC Link Voltage')
+        # Reconstruct mechanical-step reference time
+        mech_interval = int(step_size_mech / step_size_elec)
+        time_mech = time_elec[::mech_interval]
+        te_ref_mech = te_ref[::mech_interval]
 
-    #     # WT1 Active Power Reference
-    #     axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_gen'], label='WT1 p_ref_gen')
-    #     axs[1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_e'], label='WT1 p_e')
-    #     axs[1].set_ylabel('p_ref (pu)')
-    #     axs[1].legend()
-    #     axs[1].grid(True)
-    #     axs[1].set_title('WT1 Active Power Reference')
+        # Force the reference to lead: shift one mech step earlier in time
+        time_mech_leading = time_mech - step_size_mech
+        time_mech_leading[0] = time_mech[0]  # avoid negative time at start
 
-    #     # WT1 Active Power Reference Adjustment
-    #     axs[2].plot(self.results['Time'], self.results[f'{WT.name}_GSC_p_ref_adj'], label='WT1 p_ref_adj')
-    #     axs[2].set_ylabel('p_ref_adj (pu)')
-    #     axs[2].legend()
-    #     axs[2].grid(True)
-    #     axs[2].set_title('WT1 Active Power Reference Adjustment')
+        # Plot
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_elec, te, label="Tₑ (electrical step)", linewidth=2)
+        plt.step(time_mech_leading, te_ref_mech, where="post", label="Tₑ,ref (mechanical step)", linestyle='--', linewidth=2)
+        plt.xlabel("Time (s)")
+        plt.ylabel("Torque (kNm)")
+        plt.title("Multi-rate Simulation: PMSM Torque vs Reference")
+        plt.grid(True, linestyle=":")
+        plt.legend()
+        plt.tight_layout()
 
-    #     plt.xlabel('Time (s)')
-    #     plt.tight_layout()
-    #     # plt.savefig(f"Figures/co_sim/GSC_Overview_{sim_name}.png")
-    #     # plt.show()
+        # Set x-axis limit to cut off the first 10% and the last 20% of time
+        start_time = time_elec[0] + (time_elec[-1] - time_elec[0]) * 0.1
+        cutoff_time = time_elec[-1] * 0.8
+        plt.xlim(left=start_time, right=cutoff_time)
 
-    #     # Create directory if it does not exist
-    #     output_dir = f"Figures/co_sim/{sim_name}"
-    #     if not os.path.exists(output_dir):
-    #         os.makedirs(output_dir)
-    #     plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.png")
+        # Save
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/Multirate_Torque_{sim_name}.pdf", format='pdf')
+        plt.close()
+
+    # endregion
+
+    # endregion

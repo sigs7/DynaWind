@@ -76,7 +76,7 @@ class GridSideConverter_PQ(DAEModel):
 
         # pe = 3/2 /vq*iq + vd*id)
         i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_d(x,v) - self.par["q_ref_grid"] * self.v_q(x,v))  # ---      # Byttet om + og - ?
-        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_q(x,v) + self.par["q_ref_grid"] * self.v_d(x,v))  # +++
+        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_q(x,v) - self.par["q_ref_grid"] * self.v_d(x,v))  # +++
 
         # i_d_ref = max(0, i_d_ref)
         # i_q_ref = max(0, i_q_ref)
@@ -124,7 +124,6 @@ class GridSideConverter_PQ(DAEModel):
         pref_adj: DC link voltage control output
         vdc: DC link voltage
         """
-        # return ['i_d', 'i_q', 'x_p', 'x_q', 'x_pll', 'angle', 'vdc', 'vdc_ref', 'x_pref_adj', 'pref_adj' ,"p_ref", "q_ref"]
         return ['i_d', 'i_q', 'x_pll', 'angle']#, 'vdc', 'x_pref_adj']
 
     def input_list(self):
@@ -202,6 +201,59 @@ class GridSideConverter_PV(DAEModel):
 
     # region Definitions
 
+    def init_from_load_flow(self, x_0, v_0, S):
+        X = self.local_view(x_0)
+
+        self._input_values['p_ref_grid'] = self.par['p_ref_grid']
+        self._input_values['v_ref_grid'] = self.par['v_ref_grid']
+
+        v0 = v_0[self.bus_idx_red['terminal']]
+
+
+        X['x_v'] = 0
+        X['i_d'] = self.par['p_ref_grid']/abs(v0)
+        X['i_q'] = 0
+        X['x_pll'] = 0
+        X['angle'] = np.angle(v0)
+
+
+    def state_derivatives(self, dx, x, v):
+        dX = self.local_view(dx)
+        X = self.local_view(x)
+        par = self.par
+
+        q_ref_grid = self.par["k_v"]*(self.par["v_ref_grid"] - abs(self.v_t(x,v))) + X['x_v']
+        q_ref_grid = np.clip(q_ref_grid, -0.5, 0.5)  # Limit reactive power reference to +/- 0.8 pu, prioritzes active power
+
+        # q_ref_grid = 0
+        # print(f"q_ref_grid: {q_ref_grid}")
+
+        i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_d(x,v) - (q_ref_grid * self.v_q(x,v)))  # ---      # Byttet om + og - ?
+        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_q(x,v) - (q_ref_grid * self.v_d(x,v)))  # +++
+
+        # Apply current limiters
+        # i_d_ref, i_q_ref = self.limit_negative_power(i_d_ref, i_q_ref, x, v)
+
+        # i_ref = self.limit_current_prioritize_real((i_d_ref + 1j * i_q_ref), par['i_max'])
+
+        i_ref = (i_d_ref + 1j*i_q_ref)
+        i_ref = i_ref * par['i_max'] / np.maximum(par['i_max'], abs(i_ref))
+
+        # Limit integrator values
+        X['x_v'] = np.clip(X['x_v'], -par['i_max']/4, par['i_max']/4)
+
+        # Update state derivatives
+        dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
+        dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
+
+        dX['x_v'][:] = (par['k_v'] / par['T_v']) * (self.par["v_ref_grid"] - abs(self.v_t(x,v)))
+
+        dX['x_pll'][:] = par['k_pll'] / (par['T_pll']) * (self.v_q(x,v))
+        dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
+
+        return
+
+
     def load_flow_pv(self):
         return self.bus_idx['terminal'], -self.par['p_ref_grid']*self.par['S_n'], self.par['v_ref_grid']
 
@@ -224,7 +276,7 @@ class GridSideConverter_PV(DAEModel):
         x_pll: pll q-axis integral
         angle: pll angle
         """
-        return ['i_d', 'i_q', 'x_p', 'x_v', 'x_pll', 'angle']
+        return ['i_d', 'i_q', 'x_v', 'x_pll', 'angle']
 
     def input_list(self):
         """
@@ -235,92 +287,7 @@ class GridSideConverter_PV(DAEModel):
         """
         return ['p_ref_grid', 'v_ref_grid']
 
-    def state_derivatives(self, dx, x, v):
-        dX = self.local_view(dx)
-        X = self.local_view(x)
-        par = self.par
 
-        # Active and reactive power errors
-        dp = self.par["p_ref_grid"] - self.p_e(x, v)
-        dv = self.par["v_ref_grid"] - abs(self.v_t(x, v))
-
-        # # Gain Scheduling: Adjust k_p dynamically based on dp magnitude
-        # k_p_eff = par["k_p"] * (1 + 0.5 * np.abs(dp))  
-
-        # # Improved reference current calculation
-        # i_d_ref = np.clip(k_p_eff * dp + X['x_p'], 0, par['i_max'])
-        # i_q_ref = -dv * par['k_v'] - X['x_v']
-
-        self.q_ref_grid = - self.par["k_v"] * dv - X['x_v']
-
-        # pe = vq*iq + vd*id)
-        i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_d(x,v) - self.q_ref_grid * self.v_q(x,v))  # ---      # Byttet om + og - ?
-        i_q_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_q(x,v) + self.q_ref_grid * self.v_d(x,v))  # +++
-
-
-
-
-        # Apply current limiters
-        i_ref = (i_d_ref + 1j * i_q_ref)
-        i_ref = i_ref * par['i_max'] / np.maximum(par['i_max'], abs(i_ref))
-
-        # Limit integrator values
-        X['x_p'] = np.clip(X['x_p'], -par['i_max'], par['i_max'])
-        X['x_v'] = np.clip(X['x_v'], -par['i_max'], par['i_max'])
-
-        # Update state derivatives
-        dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
-        dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
-        dX['x_p'][:] = par['k_p'] / par['T_p'] * dp
-        dX['x_v'][:] = par['k_v'] / par['T_v'] * dv
-        dX['x_pll'][:] = par['k_pll'] / par['T_pll'] * self.v_q(x, v)
-        dX['angle'][:] = X['x_pll'] + par['k_pll'] * self.v_q(x, v)
-
-        return
-
-        # dp = self.par["p_ref_grid"] - self.p_e(x, v)
-        # dv = self.par["v_ref_grid"] - abs(self.v_t(x, v))
-
-        # # i_d_ref = np.clip(dp * par['k_p'] + X['x_p'], 0, par['i_max'])      # Do not allow negative d-axis current
-        # # i_d_ref = 1/(self.v_d(x,v)**2 + self.v_q(x,v)**2) * (self.par["p_ref_grid"] * self.v_d(x,v) - self.par["q_ref_grid"] * self.v_q(x,v))  # ---      # Byttet om + og - ?
-
-        # i_d_ref = np.clip(dp * par['k_p'] + X['x_p'], 0, par['i_max'])
-        # i_q_ref = -dv * par['k_v'] - X['x_v']
-
-        # # Limiters
-        # i_ref = (i_d_ref+1j*i_q_ref)
-        # i_ref = i_ref*par['i_max']/np.maximum(par['i_max'],abs(i_ref))
-
-        # # X['x_p'] = np.maximum(np.minimum(X['x_p'],par['i_max']),-par['i_max'])
-        # # X['x_v'] = np.maximum(np.minimum(X['x_v'],par['i_max']),-par['i_max'])
-
-        # X['x_p'] = np.clip(X['x_p'], -par['i_max'], par['i_max'])
-        # X['x_v'] = np.clip(X['x_v'], -par['i_max'], par['i_max'])
-
-        # dX['i_d'][:] = 1 / (par['T_i']) * (i_ref.real - X['i_d'])
-        # dX['i_q'][:] = 1 / (par['T_i']) * (i_ref.imag - X['i_q'])
-        # dX['x_p'][:] = par['k_p']/par['T_p'] * dp
-        # dX['x_v'][:] = par['k_v']/par['T_v'] * dv
-        # dX['x_pll'][:] = par['k_pll']/par['T_pll'] * (self.v_q(x,v))
-        # dX['angle'][:] = X['x_pll']+par['k_pll']*self.v_q(x,v)
-        # return
-
-    def init_from_load_flow(self, x_0, v_0, S):
-        X = self.local_view(x_0)
-
-        self._input_values['p_ref_grid'] = self.par['p_ref_grid']
-        self._input_values['v_ref_grid'] = self.par['v_ref_grid']
-
-        v0 = v_0[self.bus_idx_red['terminal']]
-        # s0 = S/ self.par["S_n"]
-        # /self.par['S_n']
-        # s00 = s0 / (self.par["S_n"])
-        X['x_p'] = 0
-        X['x_v'] = 0
-        X['i_d'] = X['x_p']
-        X['i_q'] = -X['x_v']
-        X['x_pll'] = 0
-        X['angle'] = np.angle(v0)
 
     def current_injections(self, x, v):
         i_n_r = self.par['S_n'] / self.sys_par['s_n']
@@ -354,6 +321,37 @@ class GridSideConverter_PV(DAEModel):
     def set_pref_grid(self, x, v, index, pref, power_rating):
         X = self.local_view(x)
         self.par["p_ref_grid"][index] = pref * power_rating*1e-3 / self.par["S_n"]          # MVA / MVA
+
+    def q_ref_grid(self, x, v):
+        X = self.local_view(x)
+        q_ref_grid =  self.par["k_v"]*(self.par["v_ref_grid"] - abs(self.v_t(x,v))) + X['x_v']
+        q_ref_grid = np.clip(q_ref_grid, -0.5, 0.5)  # Limit reactive power reference to +/- 0.8 pu, prioritzes active power
+        return q_ref_grid
+    
+    # Prioritize real part of i_ref
+    def limit_current_prioritize_real(self, i_ref, i_max):
+        i_d_ref, i_q_ref = i_ref.real, i_ref.imag
+        # Check if real part alone exceeds the limit
+        if abs(i_d_ref) >= i_max:
+            i_d_ref_limited = np.sign(i_d_ref) * i_max
+            i_q_ref_limited = 0.0
+        else:
+            # Limit imaginary part to keep total within i_max
+            i_q_max = np.sqrt(i_max**2 - i_d_ref**2)
+            i_q_ref_limited = np.clip(i_q_ref, -i_q_max, i_q_max)
+            i_d_ref_limited = i_d_ref
+        
+        return i_d_ref_limited + 1j * i_q_ref_limited
+    
+    def limit_negative_power(self, i_d_ref, i_q_ref, x,v):
+        p_inst = self.p_e(x,v)
+        if p_inst < 0:
+            if abs(self.v_d(x,v)) > 1e-6:
+                i_d_ref = -(self.v_q(x,v) / self.v_d(x,v)) * i_q_ref
+            else:
+                i_d_ref = 0.0
+        return i_d_ref, i_q_ref
+
 
     # endregion
 

@@ -1,6 +1,5 @@
 # region PMSM class
 from tops.cosim_models.pi_controller import PIController_LAH
-from examples.dyn_models.machine_side_converter import MachineSideConverter
 import numpy as np
 
 
@@ -45,6 +44,9 @@ class PMSM:
         self.torque_ref_raw = fast.fmu.getReal([fast.vrs['GenTq']])[0] / self.params["T_r"]       # Torque reference from FAST FMU in pu
         self.torque_ref = self.torque_ref_raw
 
+        self.torque_ref_applied = 0.0  # This will hold the delayed reference
+
+
         # Initiate starting state
         self.state = "normal"
 
@@ -70,7 +72,7 @@ class PMSM:
 
         # Add a filtered electric power to be fed into turbine controller??
 
-    def connect_dclink(self, dclink):
+    def connect_pmsm(self, dclink):
         self.dclink = dclink
 
     # region step
@@ -132,6 +134,9 @@ class PMSM:
         self.torque_ref = self.drive_control(time, dclink, self.torque_ref_raw, dt)
         self.torque_ref = self.clamp_value(self.torque_ref, max_value=0, min_value=-1.5)
 
+        # Remove drive control for now, as it is not implemented yet
+        # self.torque_ref = self.torque_ref_raw
+
         # Calculate the required i_q_ref to produce the needed torque (algebraic)
         # self.i_q_ref = (2*self.torque_ref) / (3*self.params["Psi_m"]*(self.params["Poles"]/2))
         self.i_q_ref = self.torque_ref / self.params["Psi_m"]
@@ -185,12 +190,12 @@ class PMSM:
 
         # Configurables
         vdc = dclink.vdc                                # DC-link voltage [pu]
-        vdc_ref = dclink.params["vdc_ref"]             # Reference voltage for DC-link [pu]
+        vdc_ref = dclink.params["vdc_ref"]              # Reference voltage for DC-link [pu]
         vdc_th = dclink.params["chopper_threshold"]     # Threshold voltage for fault detection [pu]
-        hold_duration = 3                             # Duration to hold the reduced torque after fault is cleared [s]
+        hold_duration = 3                               # Duration to hold the reduced torque after fault is cleared [s]
         ramp_rate_fault = 100                           # Maximum ramp rate for torque reference during fault [pu/s]
-        ramp_rate_hold = 1                          # Maximum ramp rate for torque reference during hold [pu/s]
-        ramp_rate_normal = 2                          # Maximum ramp rate for torque reference during normal operation [pu/s]
+        ramp_rate_hold = 1                              # Maximum ramp rate for torque reference during hold [pu/s]
+        ramp_rate_normal = 2                            # Maximum ramp rate for torque reference during normal operation [pu/s]
 
 
         # Start by adressing the state of the system
@@ -224,23 +229,25 @@ class PMSM:
         
         elif self.state == "fault":
             # Initiate VDC regulation
-            error_vdc = -(vdc_ref - vdc)
-            self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
-            return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_fault, dt=dt)
-            # return self.ramp_to(self.torque_ref, 0.2*self.torque_at_fault, ramp_rate_fault, dt)
+            # error_vdc = -(vdc_ref - vdc)
+            # self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
+            # return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_fault, dt=dt)
+            return self.ramp_to(self.torque_ref, 0.66*self.torque_at_fault, ramp_rate_fault, dt)
 
         elif self.state == "hold":
             # Initiate VDC regulation
-            error_vdc = -(vdc_ref - vdc)
-            self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
-            return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_hold, dt=dt)
-            # return self.ramp_to(self.torque_ref, 0.5*self.torque_at_fault, ramp_rate_hold, dt)
+            # error_vdc = -(vdc_ref - vdc)
+            # self.torque_ref_pivdc = self.pi_controller_vdc.compute(error_vdc, dt, time) + self.torque_ref_raw
+            # return self.ramp_to(current_value=self.torque_ref, target_value=self.torque_ref_pivdc, max_rate=ramp_rate_hold, dt=dt)
+            return self.ramp_to(self.torque_ref, 0.85*self.torque_at_fault, ramp_rate_hold, dt)
 
     # endregion
 
 
 
     # region Utility functions
+
+
 
     def clamp_value(self, value, min_value=None, max_value=None):
         """
@@ -318,7 +325,7 @@ class PMSM:
         return -1*(self.v_d*self.i_d + self.v_q*self.i_q)      # -3/2 fac?? to adjust to three-phase power and change direction as injection
 
     def P_e(self):
-        return self.p_e()*self.params["s_n"]
+        return self.p_e()*self.params["s_n"]            # kW
     
     def q_e(self):
         return -1*(self.v_q*self.i_d - self.v_d*self.i_q)      # 3/2 fac?
@@ -326,6 +333,8 @@ class PMSM:
     def Q_e(self):
         return self.q_e()*self.params["s_n"]
 
+    def P_mech(self):
+        return -self.t_e() * self.params["T_r"] * self.speed * self.params["w_r"]       # Mechanical power in kW
 
 
 

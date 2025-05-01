@@ -6,8 +6,8 @@ from tops.cosim_models.windturbine import WindTurbine
 from tops.cosim_models.results import Results
 
 # TOPS imports
-from collections import defaultdict
-import matplotlib.pyplot as plt
+# from collections import defaultdict
+# import matplotlib.pyplot as plt
 import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
@@ -35,13 +35,15 @@ if __name__ == '__main__':
     ### SIMULATION SETTINGS ###
     # simulation_name = "HighWind-Multirate-SC"
     
-    simulation_name = "Revisited_testing_PV"
+    simulation_name = "Paper_results_fault"
     t = 0
+    # t_init = 0
     step_size_mech = 5e-3
     step_size_elec = 5e-6
-    t_end = 7
+    t_end = 10
 
     sc_time = 4
+    sc = True
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=step_size_mech)
@@ -52,15 +54,20 @@ if __name__ == '__main__':
     results = Results()
     
     sc_bus_idx = ps.vsc['GridSideConverter_PV'].bus_idx_red['terminal'][0]
+    event_flag1 = True
 
     while t < t_end:
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Short circuit
-        if t >= sc_time and t <= (sc_time + 0.150):
+        if t >= sc_time and t <= (sc_time + 0.100) and sc == True:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 1e5
         else:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 0
+
+        # if t >= 1 and event_flag1 == True:
+        #     ps.vsc["GridSideConverter_PQ"].set_qref_grid(Qref = 0.1, index = WT1.index)
+        #     event_flag1 = False
 
         # Step TOPS
         result = sol.step()
@@ -75,8 +82,8 @@ if __name__ == '__main__':
 
         # Store the results
         results.store_time(t)
-        results.store_fmu_results(WT1)
         results.store_time_elec(t)
+        results.store_fmu_results(WT1)
         results.store_pmsm_results(WT1)
         results.store_dclink_results(WT1, ps, x, v)
 
@@ -97,11 +104,20 @@ if __name__ == '__main__':
     WT1.fast.terminate_fmu()
     # WT2.fast.terminate_fmu()
 
-    results.plot_fmu_overview(sim_name=simulation_name, WT = WT1)
-    results.plot_pmsm_overview(sim_name=simulation_name, WT = WT1)
-    results.plot_dclink_overview(sim_name=simulation_name, WT = WT1)
-    results.plot_tops_overview(sim_name=simulation_name, WT = WT1)
-    results.plot_pmsm_overview_interactive(sim_name=simulation_name, WT = WT1)
-    results.plot_controllers(sim_name=simulation_name, WT = WT1)
-    results.plot_vdc_controller_terms(sim_name=simulation_name, WT = WT1)
+
+    # results.plot_fmu_overview(sim_name=simulation_name, WT = WT1)
+    # results.plot_pmsm_overview(sim_name=simulation_name, WT = WT1)
+    # results.plot_multirate_torque(sim_name=simulation_name, WT=WT1, step_size_mech=step_size_mech, step_size_elec=step_size_elec)
+    # results.plot_dclink_overview(sim_name=simulation_name, WT = WT1)
+    # results.plot_tops_overview(sim_name=simulation_name, WT = WT1)
+    # results.plot_pmsm_overview_interactive(sim_name=simulation_name, WT = WT1)
+    # results.plot_controllers(sim_name=simulation_name, WT = WT1)
+    # results.plot_vdc_controller_terms(sim_name=simulation_name, WT = WT1)
+    # results.plot_paper_dclink(sim_name=simulation_name, WT = WT1)
+    results.plot_paper_dclink_3x1(sim_name=simulation_name, WT = WT1)
+    results.plot_paper_fmugen(sim_name=simulation_name, WT = WT1)
+    results.plot_paper_gscgrid(sim_name=simulation_name, WT = WT1, ps = ps)
+    results.plot_openfast_vs_generator_torque(sim_name=simulation_name, WT = WT1)
+
+
 
