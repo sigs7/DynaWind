@@ -1,10 +1,7 @@
 # region PMSM class
-from tops.cosim_models.pi_controller import PIController_LAH
+from tops.cosim_models.pi_controller import Controller
 import numpy as np
 
-
-
-# Tror jeg kan unngå å bruke DAEModel ettersom at MSC er dekoblet fra det dynamiske nettet, stemmer
 class PMSM:
 
     """
@@ -33,12 +30,13 @@ class PMSM:
         """
     
         ### Might need to adress an eventuall gearbox ratio
+        # Not all parameters are used in the current implementation, but they are included for future reference and expansion of the model.
         
         # Assigning the basic parameters of the PMSM
         self.params = pmsm_params
         p = self.params
 
-        # Initiating some basic initial values of operation, should be updated later based of load flow solution
+        # Initiating some basic initial values of operation
         self.speed = fast.fmu.getReal([fast.vrs['GenSpeed']])[0] / self.params["rpm_n"]
         self.SPEED = self.speed * self.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
         self.torque_ref_raw = fast.fmu.getReal([fast.vrs['GenTq']])[0] / self.params["T_r"]       # Torque reference from FAST FMU in pu
@@ -47,14 +45,14 @@ class PMSM:
         self.torque_ref_applied = 0.0  # This will hold the delayed reference
 
 
-        # Initiate starting state
+        # Initiate starting state of ELectric Drive
         self.state = "normal"
 
         # Initiate reference values
-        self.i_d_ref = 0.0          # Må kanskje endres senere
+        self.i_d_ref = 0.0          
         self.i_q_ref = self.torque_ref / self.params["Psi_m"]
 
-        self.i_d = 0.0
+        self.i_d = self.i_d_ref
         self.i_q = self.i_q_ref
 
         self.v_d = 0.0
@@ -63,19 +61,22 @@ class PMSM:
         self.v_dII = self.i_q * p["x_q"] * self.speed               
         self.v_qII = ((self.i_d*p["x_d"]) + p["Psi_m"]) * self.speed
 
+        # Possible expansion of future model, not used in current configuration
         self.theta_mech = 0.0
         self.theta_elec = 0.0
 
-        self.pi_controller_id = PIController_LAH(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
-        self.pi_controller_iq = PIController_LAH(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
-        self.pi_controller_vdc = PIController_LAH(kp=0.5, ki=5, td=0.0, kaw=15.0, output_limit=10)
+        # Initiate controllers
+        self.pi_controller_id = Controller(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
+        self.pi_controller_iq = Controller(kp=3, ki=3/0.02, td=0.0, kaw=15.0, output_limit=10)
+        self.pi_controller_vdc = Controller(kp=0.5, ki=5, td=0.0, kaw=15.0, output_limit=10)
 
         # Add a filtered electric power to be fed into turbine controller??
 
+    # Connect the PMSM to the DC-link
     def connect_pmsm(self, dclink):
         self.dclink = dclink
 
-    # region step
+    # region Step
 
     def step_pmsm(self,dclink, time : float, step_size_elec : float):
 
@@ -85,7 +86,7 @@ class PMSM:
             # Calculate the derivatives
             dX = self.derivatives()
 
-            # # Update the states using Euler integration
+            # # Update the states using Euler nunmerical integration
             self.i_d += dX["i_d"] * step_size_elec
             self.i_q += dX["i_q"] * step_size_elec
 
@@ -102,6 +103,8 @@ class PMSM:
 
         dX = {}
         p = self.params
+
+        # Old version
         # psi_q = self.i_q*p["x_q"]
         # psi_d = self.i_d*p["x_d"] + p["Psi_m"]
 
@@ -109,17 +112,15 @@ class PMSM:
         # dX["i_d"] = (self.v_d - p["r_s"]*self.i_d + psi_q*self.speed) * (p["w_n"]/p["x_d"])
         # dX["i_q"] = (self.v_q - p["r_s"]*self.i_q - psi_d*self.speed) * (p["w_n"]/p["x_q"])
 
-        w_e = self.w_e()
-        L_d = self.L_d()
-        L_q = self.L_q()
+        w_e = self.w_e()        # Electrical per unit rotational speed is essentially the same as pu mechanical speed
+        L_d = p["L_d"]
+        L_q = p["L_q"]
         R_s = p["r_s"]
 
-        dX["i_d"] = (self.v_d - R_s*self.i_d + L_q*self.i_q*self.speed) / L_d
-        dX["i_q"] = (self.v_q - R_s*self.i_q - (L_d*self.i_d + p["Psi_m"])*self.speed) / L_q
+        dX["i_d"] = (self.v_d - R_s*self.i_d + L_q*self.i_q*w_e) / L_d
+        dX["i_q"] = (self.v_q - R_s*self.i_q - (L_d*self.i_d + p["Psi_m"])*w_e) / L_q
 
-
-
-        # Speed is here exluded from the derivatives, as it is updated from the FAST FMU
+        # Mechanical speed is here exluded from the derivatives as all mechanical states are solved in the OpenFAST FMU
 
         return dX
        
@@ -130,7 +131,7 @@ class PMSM:
     def update_current_control(self, dclink, dt, time):
         p = self.params
 
-        # Run the torque reference through the drive control
+        # Run the torque reference through the Electric Drive control and externally clamp the value
         self.torque_ref = self.drive_control(time, dclink, self.torque_ref_raw, dt)
         self.torque_ref = self.clamp_value(self.torque_ref, max_value=0, min_value=-1.5)
 
@@ -138,9 +139,12 @@ class PMSM:
         # self.torque_ref = self.torque_ref_raw
 
         # Calculate the required i_q_ref to produce the needed torque (algebraic)
-        # self.i_q_ref = (2*self.torque_ref) / (3*self.params["Psi_m"]*(self.params["Poles"]/2))
         self.i_q_ref = self.torque_ref / self.params["Psi_m"]
 
+        # Number of poles in torque equation confuses me..
+        # self.i_q_ref = (2*self.torque_ref) / (3*self.params["Psi_m"]*(self.params["Poles"]/2))
+
+        # Clamping current references, this should be done based on I = sqrt(id^2 + iq^2) and not on id and iq individually, for now it is a quick fix
         self.i_q_ref = self.clamp_value(self.i_q_ref, max_value=1.2, min_value=-1.2)
         self.i_d_ref = self.clamp_value(self.i_d_ref, max_value=1.2, min_value=-1.2)
 
@@ -149,9 +153,8 @@ class PMSM:
         error_iq = (self.i_q_ref - self.i_q)
 
         ### Decoupling and current control ###
-        self.v_dII = self.L_q()*self.i_q*self.w_e()
-        self.v_qII = (self.L_d()*self.i_d + p["Psi_m"])*self.w_e()
-
+        self.v_dII = p["L_q"]*self.i_q*self.w_e()
+        self.v_qII = (p["L_d"]*self.i_d + p["Psi_m"])*self.w_e()
 
         # I_d current control
         self.v_d_ctrl = self.pi_controller_id.compute(error_id, dt, time) - self.v_dII
@@ -161,7 +164,7 @@ class PMSM:
         self.v_q_ctrl = self.pi_controller_iq.compute(error_iq, dt, time) + self.v_qII
         # self.v_q_ctrl = self.clamp_value(self.v_q_ctrl, max_value=1.5, min_value=0)
 
-        # Skipping the MSC voltage delay
+        # Skipping the MSC voltage delay, applying voltages imidiately
         self.v_d = self.v_d_ctrl
         self.v_q = self.v_q_ctrl
 
@@ -247,8 +250,6 @@ class PMSM:
 
     # region Utility functions
 
-
-
     def clamp_value(self, value, min_value=None, max_value=None):
         """
         Clamp the value within the specified minimum and maximum limits.
@@ -295,28 +296,20 @@ class PMSM:
         else:
             return current_value + max_delta * (1 if delta > 0 else -1)
 
-    def W_e(self):
-        return self.params["Poles"] * self.params["w_r"] / 2
+    # def W_e(self):
+    #     return self.params["Poles"] * self.params["w_r"] / 2
     
     def w_e(self):
         return self.speed       # equal to speed in pu?
 
-    def L_d(self):
-        return self.params["x_d"] / self.W_e()
+    # def L_d(self):
+    #     return self.params["x_d"] / self.W_e()
 
-    def L_q(self):
-        return self.params["x_q"] / self.W_e() 
+    # def L_q(self):
+    #     return self.params["x_q"] / self.W_e() 
 
     def t_e(self):
-        # p = self.params
-        # psi_q = self.i_q*p["x_q"]
-        # psi_d = self.i_d*p["x_d"] + p["Psi_m"]
-
-        # return psi_d*self.i_q - psi_q*self.i_d
-    
-        #  return (3/2) * (self.params["Poles"]/2)*((self.L_d() - self.L_q())*self.i_d + self.params["Psi_m"])*self.i_q
-
-        return ((self.params["Psi_m"] + (self.speed*self.L_d() - self.speed*self.L_q())*self.i_d))*self.i_q
+        return ((self.params["Psi_m"] + (self.w_e()*self.params["L_d"] - self.w_e()*self.params["L_q"])*self.i_d))*self.i_q
     
     def T_e(self):
         return self.t_e()*self.params["T_r"]
@@ -328,7 +321,7 @@ class PMSM:
         return self.p_e()*self.params["s_n"]            # kW
     
     def q_e(self):
-        return -1*(self.v_q*self.i_d - self.v_d*self.i_q)      # 3/2 fac?
+        return -1*(self.v_q*self.i_d - self.v_d*self.i_q)      # 3/2 fac? Not when entire system is in pu
     
     def Q_e(self):
         return self.q_e()*self.params["s_n"]

@@ -7,6 +7,7 @@ from tops.dynamic import PowerSystemModel
 import os
 import plotly.graph_objects as go
 import plotly.io as pio
+import pandas as pd
 
 
 
@@ -699,74 +700,102 @@ class Results:
         plt.savefig(f"{output_dir}/Generator_Torque_{sim_name}.pdf", format='pdf')
     # endregion
 
-    # region fmugen
-    def plot_paper_fmugen(self, sim_name: str, WT: WindTurbine):
+    def set_plot_start_time(self, axs, start_time, stop_time=None):
+        """Set x-axis limit for all subplots in a figure."""
+        for ax in axs.flat:
+            ax.set_xlim(left=start_time, right=stop_time)
+
+    def plot_paper_dclink_2x1(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, axs = plt.subplots(2, 1, figsize=(5, 6), sharex=True)
+        lw = 2.0
+
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
+        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
+        axs[0].set_ylabel('Voltage (pu)')
+        axs[0].legend(fontsize=8)
+        axs[0].grid(True, linestyle=':')
+        axs[0].set_title('DC-link Voltage vs Reference', fontsize=10)
+
+        axs[1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
+        axs[1].set_ylabel('Power (pu)')
+        axs[1].legend(fontsize=8)
+        axs[1].grid(True, linestyle=':')
+        axs[1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
+
+        axs[1].set_xlabel('Time (s)', fontsize=12)
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
+
+        self.set_plot_start_time(axs, start_time, stop_time)
+
+        plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
+
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/DClink_paper_2x1_{sim_name}.pdf", format='pdf')
+
+    def plot_paper_fmugen(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
         import numpy as np
         import os
 
-        # Use Times New Roman globally
         mpl.rcParams['font.family'] = 'Times New Roman'
 
         fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
-        lw = 2.0  # Line width
+        lw = 2.0
 
-        # (1,1) Generator torque vs reference
         axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenTq'], label='Generator Torque', linewidth=lw)
         axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Reference Torque', linestyle='--', linewidth=lw)
-        
         axs[0, 0].set_ylabel('Torque (kNm)')
         axs[0, 0].legend(fontsize=8)
         axs[0, 0].grid(True, linestyle=':')
         axs[0, 0].set_title('Generator Torque vs Reference', fontsize=10)
 
-        # (1,2) Power overview
         axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GenPwr'], label='Electric Power GSC', linewidth=lw)
         axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_ElecPwrCom'], label='Electric Power Command', linewidth=lw)
         axs[0, 1].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GenTq']) * np.array(self.results[f'{WT.name}_GenSpeed']) * (2 * np.pi / 60), label='Mechanical Power OpenFAST', linestyle=':', linewidth=lw)
-        # axs[0, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_PMSM P_mech'], label='Mechanical Power PMSM', linewidth=lw)
-        # axs[0, 1].plot(self.results['Time elec'], np.array(self.results[f'{WT.name}_PMSM P_e']), label='PMSM Active Power', linewidth=lw)
         axs[0, 1].set_ylabel('Power (kW)')
         axs[0, 1].legend(fontsize=8)
         axs[0, 1].grid(True, linestyle=':')
         axs[0, 1].set_title('Power Overview', fontsize=10)
 
-        # (2,1) Speed overview
         axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpeed'], label='Generator Speed', linewidth=lw)
         axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_RotSpeed'], label='Rotor Speed', linewidth=lw)
         axs[1, 0].plot(self.results['Time'], self.results[f'{WT.name}_RefGenSpd'], label='RefGenSpeed', linestyle='--', linewidth=lw)
         axs[1, 0].set_ylabel('Speed (rpm)')
         axs[1, 0].legend(fontsize=8)
         axs[1, 0].grid(True, linestyle=':')
+        axs[1, 0].set_ylim(4, 9)
         axs[1, 0].set_title('Speed Overview', fontsize=10)
 
-        # (2,2) Blade pitch
         axs[1, 1].plot(self.results['Time'], self.results[f'{WT.name}_BldPitch1'], label='Blade Pitch', linewidth=lw)
         axs[1, 1].set_ylabel('Pitch (deg)')
         axs[1, 1].legend(fontsize=8)
         axs[1, 1].grid(True, linestyle=':')
         axs[1, 1].set_title('Blade Pitch', fontsize=10)
 
-        # Common X label
         fig.text(0.5, 0.02, 'Time (s)', ha='center', fontsize=12)
 
-        # Ticks and layout
         for ax in axs.flat:
             ax.tick_params(labelsize=8)
 
+        self.set_plot_start_time(axs, start_time, stop_time)
+
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
-        # Save
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/FMUgen_paper_{sim_name}.pdf", format='pdf')
 
-    # endregion
-
-    # region gscgrid
-    def plot_paper_gscgrid(self, sim_name: str, WT: WindTurbine, ps: PowerSystemModel):
+    def plot_paper_gscgrid(self, sim_name: str, WT: WindTurbine, ps: PowerSystemModel, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
         import numpy as np
@@ -780,7 +809,6 @@ class Results:
         gsc_nominal_power_mw = WT.gsc_sn
         tops_nominal_power_mw = ps.s_n
 
-        # (1,1) GSC active power
         axs[0, 0].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_p_e']) * gsc_nominal_power_mw, label='GSC Active Power', linewidth=lw)
         axs[0, 0].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_p_ref_grid']) * gsc_nominal_power_mw, label='GSC Active Power Reference', linestyle='--', linewidth=lw)
         axs[0, 0].set_ylabel('Active Power (MW)')
@@ -788,7 +816,6 @@ class Results:
         axs[0, 0].grid(True, linestyle=':')
         axs[0, 0].set_title('GSC Active Power', fontsize=10)
 
-        # (1,2) GSC bus voltage
         axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_bus_voltage'], label='Bus Voltage', linewidth=lw)
         axs[0, 1].plot(self.results['Time'], self.results[f'{WT.name}_GSC_v_ref_grid'], label='Voltage Reference', linestyle='--', linewidth=lw)
         axs[0, 1].set_ylabel('Voltage (pu)')
@@ -796,17 +823,13 @@ class Results:
         axs[0, 1].grid(True, linestyle=':')
         axs[0, 1].set_title('GSC Bus Voltage', fontsize=10)
 
-        # (2,1) Generator p_e injections
-        axs[1, 0].plot(self.results['Time'], np.array(self.results["Generators_p_e"]) * tops_nominal_power_mw, 
-                    label='Generators Active Power', linewidth=lw)
+        axs[1, 0].plot(self.results['Time'], np.array(self.results["Generators_p_e"]) * tops_nominal_power_mw, label='Generators Active Power', linewidth=lw)
         axs[1, 0].set_ylabel('Active Power (MW)')
         axs[1, 0].legend(fontsize=8)
         axs[1, 0].grid(True, linestyle=':')
         axs[1, 0].set_title('Generators Active Power Injections', fontsize=10)
 
-        # (2,2) Reactive power
-        axs[1, 1].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_q_e']) * gsc_nominal_power_mw, 
-                    label='GSC Reactive Power', linewidth=lw)
+        axs[1, 1].plot(self.results['Time'], np.array(self.results[f'{WT.name}_GSC_q_e']) * gsc_nominal_power_mw, label='GSC Reactive Power', linewidth=lw)
         axs[1, 1].set_ylabel('Reactive Power (MW)')
         axs[1, 1].legend(fontsize=8)
         axs[1, 1].grid(True, linestyle=':')
@@ -817,6 +840,8 @@ class Results:
         for ax in axs.flat:
             ax.tick_params(labelsize=8)
 
+        self.set_plot_start_time(axs, start_time, stop_time)
+
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
         output_dir = f"Figures/co_sim/{sim_name}"
@@ -824,61 +849,16 @@ class Results:
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/GSCgrid_paper_{sim_name}.pdf", format='pdf')
 
-
-    # endregion
-
-    # region dclink
-
-    def plot_paper_dclink(self, sim_name: str, WT: WindTurbine):
+    def plot_paper_dclink_2x2(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
         import os
 
-        mpl.rcParams['font.family'] = 'Times New Roman'
-
-        fig, axs = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
-        lw = 2.0
-
-        # (1,1) DC-link voltage and reference
-        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
-        axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
-        axs[0].set_ylabel('Voltage (pu)')
-        axs[0].legend(fontsize=8)
-        axs[0].grid(True, linestyle=':')
-        axs[0].set_title('DC-link Voltage vs Reference', fontsize=10)
-
-        # (2,1) Power adjustment
-        axs[1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
-        axs[1].set_ylabel('Power (pu)')
-        axs[1].legend(fontsize=8)
-        axs[1].grid(True, linestyle=':')
-        axs[1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
-
-        axs[1].set_xlabel('Time (s)', fontsize=12)
-        for ax in axs.flat:
-            ax.tick_params(labelsize=8)
-
-        plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
-
-        output_dir = f"Figures/co_sim/{sim_name}"
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_paper_{sim_name}.pdf", format='pdf')
-
-
-    # endregion
-    def plot_paper_dclink_2x2(self, sim_name: str, WT: WindTurbine):
-        import matplotlib.pyplot as plt
-        import matplotlib as mpl
-        import os
-
-        # Use Times New Roman globally
         mpl.rcParams['font.family'] = 'Times New Roman'
 
         fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
-        lw = 2.0  # Line width
+        lw = 2.0
 
-        # (1,1) DC-link voltage and reference
         axs[0, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
         axs[0, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
         axs[0, 0].set_ylabel('Voltage (pu)')
@@ -886,54 +866,48 @@ class Results:
         axs[0, 0].grid(True, linestyle=':')
         axs[0, 0].set_title('DC-link Voltage vs Reference', fontsize=10)
 
-        # (1,2) Power adjustment
         axs[0, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
         axs[0, 1].set_ylabel('Power (pu)')
         axs[0, 1].legend(fontsize=8)
         axs[0, 1].grid(True, linestyle=':')
         axs[0, 1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
 
-        # (2,1) Chopper duty cycle
         axs[1, 0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_duty'], label='Duty Cycle', linewidth=lw)
         axs[1, 0].set_ylabel('Duty Cycle (pu)')
         axs[1, 0].legend(fontsize=8)
         axs[1, 0].grid(True, linestyle=':')
         axs[1, 0].set_title('Chopper Duty Cycle', fontsize=10)
 
-        # (2,2) Chopper current
         axs[1, 1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_i_chopper'], label='Chopper Current', linewidth=lw)
         axs[1, 1].set_ylabel('Current (pu)')
         axs[1, 1].legend(fontsize=8)
         axs[1, 1].grid(True, linestyle=':')
         axs[1, 1].set_title('Chopper Current', fontsize=10)
 
-        # Common X label
         fig.text(0.5, 0.02, 'Time (s)', ha='center', fontsize=12)
 
-        # Ticks and layout
         for ax in axs.flat:
             ax.tick_params(labelsize=8)
 
+        self.set_plot_start_time(axs, start_time, stop_time)
+
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
-        # Save
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/DClink_2x2_paper_{sim_name}.pdf", format='pdf')
 
-
-    def plot_paper_dclink_3x1(self, sim_name: str, WT: WindTurbine):
+    def plot_paper_dclink_3x1(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
         import os
-        # Use Times New Roman globally
+
         mpl.rcParams['font.family'] = 'Times New Roman'
 
         fig, axs = plt.subplots(3, 1, figsize=(5, 9), sharex=True)
-        lw = 2.0  # Line width
+        lw = 2.0
 
-        # (1,1) DC-link voltage and reference
         axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
         axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc_ref'], label='vdc_ref', linestyle='--', linewidth=lw)
         axs[0].set_ylabel('Voltage (pu)')
@@ -941,125 +915,166 @@ class Results:
         axs[0].grid(True, linestyle=':')
         axs[0].set_title('DC-link Voltage vs Reference', fontsize=10)
 
-        # (2,1) Power adjustment
         axs[1].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_p_adjust'], label='p_adjust', linewidth=lw)
         axs[1].set_ylabel('Power (pu)')
         axs[1].legend(fontsize=8)
         axs[1].grid(True, linestyle=':')
         axs[1].set_title('DC Voltage Controller Power Adjustment', fontsize=10)
 
-        # (3,1) Chopper current
         axs[2].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_i_chopper'], label='Chopper Current', linewidth=lw)
         axs[2].set_ylabel('Current (pu)')
         axs[2].legend(fontsize=8)
         axs[2].grid(True, linestyle=':')
         axs[2].set_title('Chopper Current', fontsize=10)
 
-        # Common X label
         axs[2].set_xlabel('Time (s)', fontsize=12)
 
-        # Ticks and layout
         for ax in axs.flat:
             ax.tick_params(labelsize=8)
 
+        self.set_plot_start_time(axs, start_time, stop_time)
+
         plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
 
-        # Save
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         plt.savefig(f"{output_dir}/DClink_3x1_paper_{sim_name}.pdf", format='pdf')
 
 
-    # region OpenFAST vs Generator Torque
-    def plot_openfast_vs_generator_torque(self, sim_name: str, WT: WindTurbine):
+    def plot_yawbrtaxp_and_y(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
         import matplotlib as mpl
-        import os
 
-        # Use Times New Roman globally
         mpl.rcParams['font.family'] = 'Times New Roman'
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        lw = 2.0  # Line width
+        fig, axs = plt.subplots(2, 1, figsize=(6, 8), sharex=True)
+        lw = 2.0
 
-        # Plot OpenFAST turbine torque and generator torque
-        ax.plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Generator Torque (kNm)', linewidth=lw)
-        ax.plot(self.results['Time'], self.results[f'{WT.name}_HSShftTq'], label='OpenFAST Turbine Torque (kNm)', linestyle='--', linewidth=lw)
+        axs[0].plot(self.results['Time'], self.results[f'{WT.name}_YawBrTAxp'], label='YawBrTaxp', linewidth=lw)
+        axs[0].set_ylabel('YawBrTaxp (kNm)')
+        axs[0].legend(fontsize=8)
+        axs[0].grid(True, linestyle=':')
+        axs[0].set_title('Yaw Bearing Axial Force X-axis', fontsize=10)
+        # Set y-axis limits based on the data within the specified time range
+        if start_time is not None or stop_time is not None:
+            time_data = np.array(self.results['Time'])
+            y_data = np.array(self.results[f'{WT.name}_YawBrTAxp'])
+            mask = (time_data >= start_time) & (time_data <= stop_time) if stop_time else (time_data >= start_time)
+            if mask.any():
+                axs[0].set_ylim(y_data[mask].min()*1.15, y_data[mask].max()*1.15)
 
-        # Set axis labels with larger font size
-        ax.set_ylabel('Torque (kNm)', fontsize=14)
-        ax.set_xlabel('Time (s)', fontsize=14)
+        
 
-        # Set title with larger font size
-        ax.set_title('OpenFAST Turbine Torque vs Generator Torque', fontsize=16)
 
-        # Increase tick label size
-        ax.tick_params(axis='both', which='major', labelsize=12)
+        axs[1].plot(self.results['Time'], self.results[f'{WT.name}_YawBrTAyp'], label='YawBrTayp', linewidth=lw, color=plt.rcParams['axes.prop_cycle'].by_key()['color'][1])
+        axs[1].set_ylabel('YawBrTayp (kNm)')
+        axs[1].legend(fontsize=8)
+        axs[1].grid(True, linestyle=':')
+        axs[1].set_title('Yaw Bearing Axial Force Y-axis', fontsize=10)
 
-        # Enable both major and minor grids
-        ax.grid(True, which='both', linestyle=':', linewidth=0.8)
+        axs[1].set_xlabel('Time (s)', fontsize=12)
 
-        # Add a clearer legend
-        ax.legend(fontsize=12, frameon=True, loc='upper left')
+        for ax in axs.flat:
+            ax.tick_params(labelsize=8)
 
-        # Adjust layout for publication quality
+        self.set_plot_start_time(axs, start_time, stop_time)
+
+        plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
+
+        output_dir = f"Figures/co_sim/{sim_name}"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        plt.savefig(f"{output_dir}/YawBrTaxp_Tayp_{sim_name}.pdf", format='pdf')
+        
+
+    def plot_paper_hsshfttq_vs_genspdortq(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+
+
+        mpl.rcParams['font.family'] = 'Times New Roman'
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        lw = 2.0
+
+        # Plot HSShftTq and GenSpdOrTrq
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_HSShftTq'], label='HSShftTq', linewidth=lw)
+        ax.plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='GenSpdOrTrq', linestyle='--', linewidth=lw)
+
+        # Set labels and title
+        ax.set_ylabel('Torque (kNm)', fontsize=12)
+        ax.set_xlabel('Time (s)', fontsize=12)
+        ax.set_title('HSShftTq vs GenSpdOrTrq', fontsize=14)
+
+        # Add legend and grid
+        ax.legend(fontsize=10)
+        ax.grid(True, linestyle=':')
+
+        # Adjust tick label size
+        ax.tick_params(labelsize=10)
+
+        # Set x-axis limits based on start_time and stop_time
+        if start_time is not None or stop_time is not None:
+            ax.set_xlim(left=start_time, right=stop_time)
+
+        # Adjust layout
         plt.tight_layout()
 
         # Create directory if it does not exist
         output_dir = f"Figures/co_sim/{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/OpenFAST_vs_Generator_Torque_{sim_name}.pdf", format='pdf')
-    # endregion
+
+        # Save the plot
+        plt.savefig(f"{output_dir}/HSShftTq_vs_GenSpdOrTrq_{sim_name}.pdf", format='pdf')
 
 
-
-        # region Multi-rate visualization
-        # region Multi-rate visualization
-    def plot_multirate_torque(self, sim_name: str, WT: WindTurbine, step_size_mech: float, step_size_elec: float):
-        import matplotlib.pyplot as plt
+    # region Save and Load
+    def save_to_file(self, simulation_name: str):
+        """Save results to an HDF5 file under a simulation-specific folder, converting arrays to list-compatible format"""
+        import pandas as pd
         import os
         import numpy as np
-        import matplotlib as mpl
 
-        # Load data
-        time_elec = np.array(self.results["Time elec"])
-        te = np.array(self.results[f"{WT.name}_PMSM T_e"])
-        te_ref = np.array(self.results[f"{WT.name}_PMSM T_e_ref"])
 
-        # Reconstruct mechanical-step reference time
-        mech_interval = int(step_size_mech / step_size_elec)
-        time_mech = time_elec[::mech_interval]
-        te_ref_mech = te_ref[::mech_interval]
+        output_dir = f"Figures/co_sim/{simulation_name}"
+        os.makedirs(output_dir, exist_ok=True)
+        filepath = os.path.join(output_dir, "results.h5")
 
-        # Force the reference to lead: shift one mech step earlier in time
-        time_mech_leading = time_mech - step_size_mech
-        time_mech_leading[0] = time_mech[0]  # avoid negative time at start
+        # Sanitize the result dictionary
+        cleaned = {}
+        for key, value_list in self.results.items():
+            cleaned_values = []
+            for item in value_list:
+                if isinstance(item, np.ndarray):
+                    # Handle scalar, 1D, and higher-dimensional arrays
+                    if item.ndim == 0:
+                        cleaned_values.append(item.item())  # Convert scalar array to float
+                    elif item.ndim == 1:
+                        cleaned_values.append(item.tolist())  # 1D array to list
+                    else:
+                        cleaned_values.append([float(x) for x in item.flatten()])  # Flatten and convert
+                elif hasattr(item, '__float__') and not isinstance(item, (list, tuple)):
+                    cleaned_values.append(float(item))  # Numpy float, etc.
+                else:
+                    cleaned_values.append(item)  # Leave other types as-is
+            cleaned[key] = cleaned_values
 
-        # Plot
-        plt.figure(figsize=(10, 5))
-        plt.plot(time_elec, te, label="Tₑ (electrical step)", linewidth=2)
-        plt.step(time_mech_leading, te_ref_mech, where="post", label="Tₑ,ref (mechanical step)", linestyle='--', linewidth=2)
-        plt.xlabel("Time (s)")
-        plt.ylabel("Torque (kNm)")
-        plt.title("Multi-rate Simulation: PMSM Torque vs Reference")
-        plt.grid(True, linestyle=":")
-        plt.legend()
-        plt.tight_layout()
+        # Save to HDF5
+        df = pd.DataFrame(cleaned)
+        df.to_hdf(filepath, key='sim', mode='w')
+        print(f"[INFO] Results saved to {filepath}")
 
-        # Set x-axis limit to cut off the first 10% and the last 20% of time
-        start_time = time_elec[0] + (time_elec[-1] - time_elec[0]) * 0.1
-        cutoff_time = time_elec[-1] * 0.8
-        plt.xlim(left=start_time, right=cutoff_time)
 
-        # Save
-        output_dir = f"Figures/co_sim/{sim_name}"
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/Multirate_Torque_{sim_name}.pdf", format='pdf')
-        plt.close()
 
-    # endregion
+    def load_from_file(self, simulation_name: str):
+        """Load results from an HDF5 file under a simulation-specific folder"""
+        filepath = f"Figures/co_sim/{simulation_name}/results.h5"
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"No saved results found at {filepath}")
 
+        df = pd.read_hdf(filepath, key='sim')
+        self.results = df.to_dict(orient='list')
+        print(f"[INFO] Results loaded from {filepath}")
     # endregion

@@ -39,22 +39,16 @@ class Controller:
 
         u_desired = self.P_term + self.I_term + self.D_term
 
-        # Anti-windup
-        if u_desired > self.output_limit:
-            u_desired = self.output_limit
-            self.integral -= error * dt
+        u_out = np.clip(u_desired, -self.output_limit, self.output_limit)
 
-        elif u_desired < -self.output_limit:
-            u_desired = -self.output_limit
-            self.integral -= error * dt
+        # Anti-windup correction
+        aw_term = self.kaw * (u_desired - u_out)
+        self.integral += aw_term * dt
 
-        # Update previous error
+        # Store output and prev error for next iteration
+        self.last_output = u_out
         self.prev_error = error
 
-        # Update last output
-        self.last_output = u_desired
-
-
-        return u_desired
+        return u_out
 
 # endregion

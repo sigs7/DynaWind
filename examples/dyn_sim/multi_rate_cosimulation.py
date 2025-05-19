@@ -6,8 +6,6 @@ from tops.cosim_models.windturbine import WindTurbine
 from tops.cosim_models.results import Results
 
 # TOPS imports
-# from collections import defaultdict
-# import matplotlib.pyplot as plt
 import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
@@ -19,35 +17,32 @@ if __name__ == '__main__':
     import tops.ps_models.k2a_highwind as model_data
     model = model_data.load()
 
-    # Create Wind Turbine instance
-
-
     # Power system model
     ps = dps.PowerSystemModel(model=model)
 
+    # Create Wind Turbine instance
     WT1 = WindTurbine(name='WT1', index = 0, gsc_control="PV")
 
+    # Initiate the power system model
     ps.init_dyn_sim()
-    print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))
+    print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))        # Checks for unstable initiation
 
     x_0 = ps.x_0.copy()
 
     ### SIMULATION SETTINGS ###
-    # simulation_name = "HighWind-Multirate-SC"
-    
-    simulation_name = "Paper_results_fault"
+    simulation_name = "Paper_results_1"
     t = 0
-    # t_init = 0
-    step_size_mech = 5e-3
-    step_size_elec = 5e-6
     t_end = 10
+    step_size_mech = 0.01
+    step_size_elec = 5e-6
 
-    sc_time = 4
+    # Short circuit settings
+    sc_time = 30.0
+    sc_duration = 0.100
     sc = True
 
     # Solver
     sol = dps_sol.ModifiedEulerDAE(ps.state_derivatives, ps.solve_algebraic, 0, x_0, t_end, max_step=step_size_mech)
-
     t_0 = time.time()
 
     ## Dict to store the results
@@ -60,11 +55,12 @@ if __name__ == '__main__':
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Short circuit
-        if t >= sc_time and t <= (sc_time + 0.100) and sc == True:
+        if t >= sc_time and t <= (sc_time + sc_duration) and sc == True:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 1e5
         else:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 0
 
+        # Random check
         # if t >= 1 and event_flag1 == True:
         #     ps.vsc["GridSideConverter_PQ"].set_qref_grid(Qref = 0.1, index = WT1.index)
         #     event_flag1 = False
@@ -77,7 +73,8 @@ if __name__ == '__main__':
 
         # Step the Wind Turbine
         WT1.step_windturbine_multirate(ps, x, v, t, step_size_mech, step_size_elec, results)
-        # WT1.step_windturbine(ps, t, step_size_mech, x, v)
+
+        # Calculate the derivatives of the power system
         dx = ps.ode_fun(0, ps.x_0)
 
         # Store the results
@@ -87,7 +84,7 @@ if __name__ == '__main__':
         results.store_pmsm_results(WT1)
         results.store_dclink_results(WT1, ps, x, v)
 
-
+        # Store the results of the GSC
         if WT1.gsc_control == "PQ":
             results.store_gsc_results_PQ(WT1, ps, x, v)
         elif WT1.gsc_control == "PV":
@@ -102,22 +99,6 @@ if __name__ == '__main__':
 
     # Terminate the FMU
     WT1.fast.terminate_fmu()
-    # WT2.fast.terminate_fmu()
 
-
-    # results.plot_fmu_overview(sim_name=simulation_name, WT = WT1)
-    # results.plot_pmsm_overview(sim_name=simulation_name, WT = WT1)
-    # results.plot_multirate_torque(sim_name=simulation_name, WT=WT1, step_size_mech=step_size_mech, step_size_elec=step_size_elec)
-    # results.plot_dclink_overview(sim_name=simulation_name, WT = WT1)
-    # results.plot_tops_overview(sim_name=simulation_name, WT = WT1)
-    # results.plot_pmsm_overview_interactive(sim_name=simulation_name, WT = WT1)
-    # results.plot_controllers(sim_name=simulation_name, WT = WT1)
-    # results.plot_vdc_controller_terms(sim_name=simulation_name, WT = WT1)
-    # results.plot_paper_dclink(sim_name=simulation_name, WT = WT1)
-    results.plot_paper_dclink_3x1(sim_name=simulation_name, WT = WT1)
-    results.plot_paper_fmugen(sim_name=simulation_name, WT = WT1)
-    results.plot_paper_gscgrid(sim_name=simulation_name, WT = WT1, ps = ps)
-    results.plot_openfast_vs_generator_torque(sim_name=simulation_name, WT = WT1)
-
-
-
+    # Saves the result class to a file, see plotting.py for loading and plotting of the results
+    results.save_to_file(simulation_name)

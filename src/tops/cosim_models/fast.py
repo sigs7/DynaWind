@@ -8,6 +8,20 @@ class FAST:
         self.fmu, self.vrs = self.initiate_FAST_FMU(params.get("fast_fmu_filename", "fast.fmu"), params.get("start_time", 0.0), params.get("mode", 3))
 
     def initiate_FAST_FMU(self, fmu_filename: str, start_time: float, mode: int) -> FMU2Slave:
+        """
+        Initializes the FMU for co-simulation.
+
+        Args:
+            fmu_filename (str): Path to the FMU file.
+            start_time (float): Simulation start time.
+            mode (int): FMU operational mode.
+
+        Returns:
+            FMU2Slave: Initialized FMU instance.
+            dict: Variable name to value reference mapping.
+        """
+
+
 
         model_description = read_model_description(fmu_filename, validate=False)
 
@@ -42,9 +56,11 @@ class FAST:
         
         return fmu, vrs
     
+    # Connects the FAST FMU to the wind turbine model
     def connect_fmu(self, wind_turbine):
         self.wind_turbine = wind_turbine
 
+    # Stepping the OpenFAST FMU
     def step_fmu(self, pmsm, ps, v, x, time: float, step_size: float):
 
         from tops.cosim_models.pmsm import PMSM  # Lazy import to avoid circular import
@@ -52,9 +68,11 @@ class FAST:
         self.fmu.setReal([self.vrs['GenSpdOrTrq']], [-pmsm.T_e()])
         # self.fmu.setReal([self.vrs['GenPwr']], [pmsm.P_e()])
         if self.wind_turbine.gsc_control == "PV":
-            self.fmu.setReal([self.vrs['GenPwr']], [ps.vsc["GridSideConverter_PV"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PV"].par["S_n"][self.wind_turbine.index] * 1e3])
+            p_e_gsc = ps.vsc["GridSideConverter_PV"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PV"].par["S_n"][self.wind_turbine.index] * 1e3
+            self.fmu.setReal([self.vrs['GenPwr']], [p_e_gsc])       # Power in kW
         if self.wind_turbine.gsc_control == "PQ":
-            self.fmu.setReal([self.vrs['GenPwr']], [ps.vsc["GridSideConverter_PQ"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PQ"].par["S_n"][self.wind_turbine.index] * 1e3])
+            p_e_gsc = ps.vsc["GridSideConverter_PQ"].p_e(x,v)[self.wind_turbine.index] * ps.vsc["GridSideConverter_PQ"].par["S_n"][self.wind_turbine.index] * 1e3
+            self.fmu.setReal([self.vrs['GenPwr']], [p_e_gsc])       # Power in kW
         
 
         # Set Torque reference to pmsm in mechanical timestep
@@ -68,24 +86,29 @@ class FAST:
         pmsm.SPEED = pmsm.speed * pmsm.params["rpm_n"]        # Mulig drit kodepraksis menmen     (rpm)
 
 
-        # # Maximum power
-        self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])
+        # # # Maximum power
+        # self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])        # Setting a high reference translates to delivering maximum power avaiable
 
-        # # Derating 
-        # if time < 8:
-        #     self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      # Setting a high reference translates to delivering maximum power avaiable
-        # elif 8.01 < time < 12:
-        #     self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])      # Derating to 10 MW
-        # else:
-        #     self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      
+        # Derating 
+        if time < 120:
+            self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      # Setting a high reference translates to delivering maximum power avaiable
+        elif 120.01 < time < 240:
+            self.fmu.setReal([self.vrs['ElecPwrCom']], [10e3])      # Derating to 10 MW
+        else:
+            self.fmu.setReal([self.vrs['ElecPwrCom']], [20e3])      
 
         self.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
         
-
+    # FMU termination
     def terminate_fmu(self):
         self.fmu.terminate()
         self.fmu.freeInstance()
+
+
+
+
+
 
     # region Old code
     # def step_fmu(self, pmsm, time: float, step_size: float):
