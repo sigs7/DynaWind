@@ -1,26 +1,14 @@
-# TOPS (**T**iny **O**pen **P**ower System **S**imulator)
-**Note**: This repository was previously called DynPSSimPy.
+# DynaWind
 
+**DynaWind** is a modular, high-fidelity Python simulation framework for co-simulation of wind turbine dynamics and power systems. It integrates aerodynamic and structural models from OpenFAST (FMU-based) with detailed electrical models of the turbine generator and converters.
 
-This is a package for performing dynamic power system simulations in Python. The aim is to provide a simple and lightweight tool which is easy to install, run and modify, to be used by researchers and in education. Performance is not the main priority. The only dependencies are numpy, scipy, pandas and matplotlib (the core functionality only uses numpy and scipy).
+## Features
 
-The package is being developed as part of ongoing research, and thus contains experimental features. Use at your own risk!
+- ⚙️ **Co-simulation with OpenFAST**: FMU integration for high-fidelity turbine dynamics.
+- ⚡ **Permanent Magnet Synchronous Machine (PMSM)**: Detailed electric drive modeling including current control.
+- 🔋 **DC-link System**: Voltage regulation with chopper logic and anti-windup control.
+- 🔌 **Grid-Side Converter (PQ/PV control)**: Integrated with external power system solvers.
+- 📈 **Logging and Visualization**: Automated results collection and flexible plotting with Matplotlib and Plotly.
 
-Some features:
-- Newton-Rhapson power flow
-- Dynamic time domain simulation (RMS/phasor approximation)
-- Linearization, eigenvalue analysis/modal analysis
+## Directory Structure
 
-# Installation
-The package can be installed using pip, as follows:
-
-`pip install tops`
-
-# Citing
-If you use this code for your research, please cite [this paper](https://arxiv.org/abs/2101.02937).
-
-# Example notebooks
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/hallvar-h/TOPS/HEAD?filepath=examples%2Fnotebooks)
-
-# Contact
-[Hallvar Haugdal](mailto:hallvhau@gmail.com)
