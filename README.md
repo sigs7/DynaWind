@@ -11,10 +11,9 @@
 - 📈 **Logging and Visualization**: Automated results collection and flexible plotting with Matplotlib and Plotly.
 
 ## Directory Structure
-## Directory Structure
 
 ```
-DynaWind/
+cosim_models/
 │
 ├── controller.py        # PI(D) controllers with anti-windup
 ├── dclink.py            # DC-link voltage dynamics and chopper logic
