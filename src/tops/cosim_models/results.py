@@ -711,7 +711,7 @@ class Results:
 
         mpl.rcParams['font.family'] = 'Times New Roman'
 
-        fig, axs = plt.subplots(2, 1, figsize=(5, 6), sharex=True)
+        fig, axs = plt.subplots(2, 1, figsize=(6, 8), sharex=True)
         lw = 2.0
 
         axs[0].plot(self.results['Time elec'], self.results[f'{WT.name}_DC_vdc'], label='vdc', linewidth=lw)
@@ -751,8 +751,8 @@ class Results:
         fig, axs = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
         lw = 2.0
 
-        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenTq'], label='Generator Torque', linewidth=lw)
-        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Reference Torque', linestyle='--', linewidth=lw)
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenTq'], label='Turbine Controller Torque Reference', linewidth=lw)
+        axs[0, 0].plot(self.results['Time'], self.results[f'{WT.name}_GenSpdOrTrq'], label='Generator Torque', linestyle='--', linewidth=lw)
         axs[0, 0].set_ylabel('Torque (kNm)')
         axs[0, 0].legend(fontsize=8)
         axs[0, 0].grid(True, linestyle=':')
