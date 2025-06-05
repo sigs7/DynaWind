@@ -10,19 +10,27 @@
 - 🔌 **Grid-Side Converter (PQ/PV control)**: Integrated with external power system solvers.
 - 📈 **Logging and Visualization**: Automated results collection and flexible plotting with Matplotlib and Plotly.
 
-## Directory Structure
 
-```
-cosim_models/
+## 📁 Directory Structure
+dynawind/
 │
-├── controller.py        # PI(D) controllers with anti-windup
-├── dclink.py            # DC-link voltage dynamics and chopper logic
-├── fast.py              # FMU handling for OpenFAST
-├── ideal_generator.py   # Optional simplified generator model
-├── pi_controller.py     # Alternative implementation of PI control
-├── pmsm.py              # Permanent Magnet Synchronous Machine model
-├── results.py           # Logging and plotting of simulation data
-├── windturbine.py       # Top-level wind turbine model integrating all components
+├── dynawind_models/ # Modular subcomponents of the wind turbine
+│ ├── controller.py # Generic PI control schemes
+│ ├── dclink.py # DC-link model and control
+│ ├── fast.py # FMU wrapper for OpenFAST
+│ ├── ideal_generator.py # Optional simplified generator
+│ ├── pmsm.py # PMSM modeling and control
+│ ├── results.py # Logging and results export
+│ └── windturbine.py # System integrator model
+│
+├── figures/ # Output figures from simulations
+│ ├── Paper_results_60_SC/
+│ ├── Paper_results_120/
+│ └── Paper_results_360/
+│
+├── plotting.py # Custom plotting routines
+├── simulation.py # Example simulation setup
+└── examples/ # Example scripts (optional)
 ```
 
 ## Installation
@@ -44,8 +52,10 @@ cosim_models/
 ## Dependencies
 
 - `numpy`
-- `matplotlib`
-- `plotly`
+- `scipy`
 - `fmpy`
+- `matplotlib`
 - `pandas`
+- `ipympl`
+- `plotly`
 
