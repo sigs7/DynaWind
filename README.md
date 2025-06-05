@@ -86,10 +86,10 @@ Update the FMU path in `fast.py` or through the configuration section in `windtu
 - `numpy`
 - `scipy`
 - `fmpy`
-- `pandas`
 - `matplotlib`
-- `plotly`
+- `pandas`
 - `ipympl`
+- `plotly`
 
 
 ---
