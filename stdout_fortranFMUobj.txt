@@ -18,8 +18,8 @@
   - Date: Jan 31 2025
   - Time: 08:53:05
  Execution Info:
-  - Date: 03/04/2025
-  - Time: 10:15:59+0100
+  - Date: 06/05/2025
+  - Time: 13:22:30+0200
 
  OpenFAST input file heading:
      IEA 15 MW offshore reference model monopile configuration
@@ -40,13 +40,7 @@
            2
  EstWndSpd:L/T;RefGenSpd:A/T
  logging channels initialised
-  Time: 0 of 150 seconds.
-                                                                                                   Time: 10 of 150 seconds.  Estimated final completion at 10:19:52.                                                                                                                                   Time: 20 of 150 seconds.  Estimated final completion at 10:20:29.                                                                                                                                   Time: 30 of 150 seconds.  Estimated final completion at 10:20:29.                                                                                                                                  
-  Total Real Time:       69.025 seconds
-  Total CPU Time:        30.688 seconds
-  Simulation CPU Time:   29.078 seconds
-  Simulated Time:        39.99 seconds
-  Time Ratio (Sim/CPU):  1.3753
+  Time: 0 of 361 seconds.
 
   OpenFAST completed.
 
