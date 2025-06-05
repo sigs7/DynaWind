@@ -12,26 +12,26 @@
 
 
 ## 📁 Directory Structure
-dynawind/
-│
-├── dynawind_models/ # Modular subcomponents of the wind turbine
-│ ├── controller.py # Generic PI control schemes
-│ ├── dclink.py # DC-link model and control
-│ ├── fast.py # FMU wrapper for OpenFAST
-│ ├── ideal_generator.py # Optional simplified generator
-│ ├── pmsm.py # PMSM modeling and control
-│ ├── results.py # Logging and results export
-│ └── windturbine.py # System integrator model
-│
-├── figures/ # Output figures from simulations
-│ ├── Paper_results_60_SC/
-│ ├── Paper_results_120/
-│ └── Paper_results_360/
-│
-├── plotting.py # Custom plotting routines
-├── simulation.py # Example simulation setup
-└── examples/ # Example scripts (optional)
-```
+├── dynawind/
+│   ├── dynawind_models/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── controller.py
+│   │   ├── dclink.py
+│   │   ├── fast.py
+│   │   ├── ideal_generator.py
+│   │   ├── pmsm.py
+│   │   ├── results.py
+│   │   └── windturbine.py
+│   │
+│   ├── figures/
+│   │   ├── Paper_results_60_SC/
+│   │   ├── Paper_results_120/
+│   │   └── Paper_results_360/
+│   │
+│   ├── plotting.py
+│   └── simulation.py
+
 
 ## Installation
 
