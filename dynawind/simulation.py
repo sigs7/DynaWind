@@ -30,14 +30,14 @@ if __name__ == '__main__':
     x_0 = ps.x_0.copy()
 
     ### SIMULATION SETTINGS ###
-    simulation_name = "Paper_results_dynawindsolo"
+    simulation_name = "dynawind_example"
     t = 0
-    t_end = 0.1
+    t_end = 30
     step_size_mech = 0.01
     step_size_elec = 5e-6
 
     # Short circuit settings
-    sc_time = 30.0
+    sc_time = 15
     sc_duration = 0.100
     sc = True
 

@@ -12,9 +12,9 @@ import tops.ps_models.k2a_highwind as model_data
 
 
 def main():
-    simulation_name = "Paper_results_360"       # Name of the simulation file
-    start_time = 10                                  # Start time for plotting
-    stop_time = 360                               # Stop time for plotting
+    simulation_name = "dynawind_example"       # Name of the simulation file
+    start_time = 5                                  # Start time for plotting
+    stop_time = 30                               # Stop time for plotting
 
     # Load the results
     results = Results()
