@@ -2,6 +2,7 @@
 
 # WindTurbine imports
 import sys
+sys.path.append(r"C:\git\DynaWind-1")
 from dynawind.dynawind_models.windturbine import WindTurbine
 from dynawind.dynawind_models.results import Results
 

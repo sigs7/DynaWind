@@ -36,8 +36,8 @@ class FAST:
 
         unzipdir = extract(fmu_filename)        # , unzipdir=f'Turbine_{nr}'
 
-        wd_file_path = 'openfast_fmu/resources/wd.txt'
-        new_directory = 'C:/Users/larsi/Master/TOPS_LAH/TOPS_LAH'
+        wd_file_path = 'openfast_fmu\\resources\\wd.txt'
+        new_directory = 'C:\\git\\DynaWind-1\\src\\tops'
 
         with open(wd_file_path, 'w') as f:
             f.write(new_directory)
