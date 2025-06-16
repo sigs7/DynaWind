@@ -16,13 +16,20 @@ importlib.reload(dps)
 if __name__ == '__main__':
 
     import tops.ps_models.k2a_highwind as model_data
-    model = model_data.load()
+    model = model_data.load()    # goes into file k2a_highwind to fetch system data 
 
     # Power system model
-    ps = dps.PowerSystemModel(model=model)
+    ps = dps.PowerSystemModel(model=model)  # creates a power system model from the file given above
+    # goes into TOPS to initialize simulation by running initial function of class PowerSystemModel
+    # creates a copy of the model and initializes this as the current model for this class object
+    # set max.iterations and tolerance (hard coded)
+    # store all model parameters in the PowerSystemModel object (alter some storage, like buses to tuples) 
+    # PowerSystemModel is a class object in TOPS which stores all other object in the power system. It will call and 
+    # initiate all other relevant classes in TOPS.
 
     # Create Wind Turbine instance
     WT1 = WindTurbine(name='WT1', index = 0, gsc_control="PV")
+    # uses TOPS classes and dynawind classes to define required attributes to a windturbine
 
     # Initiate the power system model
     ps.init_dyn_sim()
