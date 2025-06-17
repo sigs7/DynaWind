@@ -2,41 +2,56 @@ def load():
     return {
         'base_mva': 100,
         'f': 50,
-        'slack_bus': 'B1',
+        'slack_bus': 'Main Bus B',
 
         'buses': [
             ['name',    'V_n'],
-            ['B1',      11],    # main busbar (slack)
-            ['B2',      33],    # wind busbar
-            ['B3',      0.69],  # utility
-            ['B4',      1.3], # dc bus
-            ['B31',    20],    # wind busbar 1
-            ['B32',    20],    # wind busbar 2
-            ['B33',    20]    # wind busbar 3
+            #['Main Bus A', 11],
+            ['Main Bus B', 11],
+            ['Busbar WTG1 LV', 0.69],     
+            ['Busbar WTG1 HV', 33], 
+            ['Terminal WindPark', 33],
+            ['Drilling AC Bus B', 11],
+            ['Terminal AC High Drilling B', 11],
+            ['Terminal AC Low Drilling B', 0.69],
+            ['Terminal DC Drilling B', 1.3],
+            ['Drilling DC Bus B', 1.3],
+            ['SG Terminal 3', 11],
+            ['Terminal ACO_02', 11],
+            ['Terminal AC High PEC_VSDc_GEX_02', 11],
+            ['Terminal AC Low PEC_VSDc_GEX_02', 3.3],
+            ['Terminal DC PEC_VSDc_GEX_02', 6],
+            ['Terminal TRA_UTL690_02', 11],
+            ['Utility690 Bus B',  0.69],
+            ['Terminal TRA_UTL400_02', 0.69],
+            ['Utility400 SWBD/BusB', 0.4]
+
         ],
 
         'lines': [
             ['name', 'from_bus', 'to_bus', 'length', 'S_n', 'V_n', 'unit', 'R', 'X', 'B'],
-            ['L1-2', 'B1', 'B2', 10, 100, 20, 'p.u.', 1e-4, 1e-3, 1.75e-3],
-            ['L1-3', 'B1', 'B3', 10, 100, 20, 'p.u.', 1e-4, 1e-3, 1.75e-3],
-            ['L1-4', 'B1', 'B4', 10, 100, 20, 'p.u.', 1e-4, 1e-3, 1.75e-3]
+            ['Cable WTG1', 'Terminal WindPark', 'Busbar WTG1 HV', 9, 27.95, 33, 'pf', 0.7074, 0.922869, 1.75e-3],
+            ['Line GEX_02', 'Main Bus B', 'Terminal AC High PEC_VSDc_GEX_02', 0.25, 9.907, 20, 'pf', 0.01965, 0.02356195, 1.75e-3],
+            ['Line ACO_02', 'Main Bus B', 'Terminal ACO_02', 0.25, 6.859, 11, 'pf', 0.038875, 0.02591815, 1.75e-3],
+            ['Line Utility B', 'Main Bus B', 'Terminal TRA_UTL690_02', 0.15, 6.859, 11, 'pf', 0.023325, 0.01555089, 1.75e-3],
+            ['Line 690 Trafo B', 'Utilty690 Bus B', 'Terminal TRA_UTL400_02', 0.15, 0.6215, 0.69, 'pf', 0.01179, 0.01413717, 1.75e-3],
+            ['Line SG3', 'SG Terminal 3', 'Main Bus B', 0.05, 39.63, 11, 'pf', 0.0009825, 0.0039275, 1.75e-3]
+            ['Line ACO_02', 'Main Bus B', 'Terminal ACO_02', 0.25, 6.859, 11, 'pf', 0.038875, 0.02591815, 1.75e-3], 
+            ['Line Drilling B', 'Main Bus B', 'Drilling AC Bus B', 0.25, 6.859, 11, 'pf', 0.038875, 0.02591815, 1.75e-3],
+            ['Line AC Drilling B', 'Drilling AC Bus B', 'Terminal AC High Drilling B', 0.05, 6.859, 11, 'pf', 0.007775, 0.00518363, 1.75e-3],
+            ['Line DC Drilling B', 'Terminal DC Drilling B', 'Drilling DC Bus B', 0.01, 6.755, 1.3, 'pf', 0.0001, 0.0002356, 1.75e-3]
+
         ],
 
         'transformers': [
             ['name', 'from_bus', 'to_bus', 'S_n', 'V_n_from', 'V_n_to', 'R', 'X'],
-            ['T1', 'B1', 'B2', 100, 11, 33, 0, 0.15],
-            ['T2', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T3', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T4', 'B1', 'B4', 100, 11, 1.3, 0, 0.15],
-            ['T5', 'B1', 'B2', 100, 11, 33, 0, 0.15],
-            ['T6', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T7', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T8', 'B1', 'B4', 100, 11, 1.3, 0, 0.15],
-            ['T9', 'B1', 'B2', 100, 11, 33, 0, 0.15],
-            ['T10', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T11', 'B1', 'B3', 3.3, 11, 0.69, 0, 0.0035],
-            ['T12', 'B1', 'B4', 100, 11, 1.3, 0, 0.15],
-            ['T13', 'B1', 'B4', 100, 11, 1.3, 0, 0.15]
+            ['Trafo WTG1', 'Busbar WTG1 HV', 'Busbar WTG1 LV', 10, 0.69, 33, 0.5, 0.1],
+            ['Trafo WindPark', 'Terminal WindPark', 'Main Bus B', 25, 33, 11, 127, 0.1],
+            ['Trafo GEX_02', 'Terminal AC High PEC_VSDc_GEX_02', 'Terminal AC Low PEC_VSDc_GEX_02', 10.5, 11, 3.3, 0, 0],
+            ['Terminal AC Low PEC_VSDc_GEX_02', 'Terminal TRA_UTL690_02', 'Utility690 Bus B', 3.3, 11, 0.69, 4, 0.1],
+            ['TRA_UTL400_02', 'Utility690 Bus B', 'Utility400 SWBD/BusB', 0.6, 0.69, 0.4, 0.1, 0.1],
+            ['TRA_Dril_02', 'Terminal AC High Drilling B', 'Terminal AC Low Drilling B', 3.3, 11, 0.69, 0, 0]
+
         ],
 
         'loads': [
