@@ -14,5 +14,6 @@ if __name__ == '__main__':
     ps.ode_fun(0, ps.x0)
     sim = Simulator(ps, dt=5e-3, t_end=2)
     sim.main_loop()
-
+    print(f'Voltages:\n{sim.sol.v}')
+    
     print('Done')
