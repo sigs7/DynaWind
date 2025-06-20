@@ -84,7 +84,7 @@ def load():
             ['Line Drilling A', 'Main Bus A', 'Drilling AC Bus A', 0.2, 100, 11, 'pf', 0.1555, 0.103672, 0.28],
             ['Line AC Drilling B', 'Drilling AC Bus B', 'Terminal AC High Drilling B', 0.05, 100, 11, 'pf', 0.1555, 0.103672, 0.28],
             ['Line AC Drilling A', 'Drilling AC Bus A', 'Terminal AC High Drilling A', 0.05, 100, 11, 'pf', 0.1555, 0.103672, 0.28],
-            ['Switch Main A Main B', 'Main Bus A', 'Main Bus B', 0.01, 100, 11, 'pf', 0.1555, 0.103672, 0.28]
+            ['Switch Main A Main B', 'Main Bus A', 'Main Bus B', 0.001, 100, 11, 'pf', 0.0786, 0.094247, 0.37]
 
         ],
 
@@ -152,27 +152,27 @@ def load():
 
         'generators': {
             'GEN': [
-                ['name',    'bus',  'S_n',  'V_n',  'P',    'V',    'H',    'D',    'X_d',  'X_q',  'X_d_t',    'X_q_t',    'X_d_st',   'X_q_st',   'T_d0_t',   'T_q0_t',   'T_d0_st',  'T_q0_st'],
-                ['Synchronous Generator 1', 'Main Bus A', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 0.01, 0.03, 0.013],
-                ['Synchronous Generator 2', 'Main Bus A', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 0.01, 0.03, 0.013],
-                ['Synchronous Generator 3', 'Main Bus B', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 0.01, 0.03, 0.013]
+                ['name',                        'bus', 'S_n','V_n','P','V',    'H',    'D',    'X_d',  'X_q',  'X_d_t',    'X_q_t',    'X_d_st',   'X_q_st',   'T_d0_t',   'T_q0_t',   'T_d0_st',  'T_q0_st'],
+                ['Synchronous Generator 1', 'Main Bus A', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
+                ['Synchronous Generator 2', 'Main Bus A', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
+                ['Synchronous Generator 3', 'Main Bus B', 28, 11, 20, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
             ]
         },
 
         'gov': {'TGOV1': [ ## GAST -> TGOV1
             ['name',    'gen',  'R',    'D_t',  'V_min',    'V_max',    'T_1',  'T_2',  'T_3'],
-            ['GOV1',     'Synchronous Generator 1',   0.05,   0,   0, 1,    0.4,    3,   0.01],
-            ['GOV2',     'Synchronous Generator 2',   0.05,   0,   0, 1,    0.4,    3,   0.01],
-            ['GOV3',     'Synchronous Generator 3',   0.05,   0,   0, 1,    0.4,    3,   0.01]
+            ['GOV1',     'Synchronous Generator 1',   0.05,   0,   0, 1,    0.4,    0.9,   2],
+            ['GOV2',     'Synchronous Generator 2',   0.05,   0,   0, 1,    0.4,    0.9,   2],
+            ['GOV3',     'Synchronous Generator 3',   0.05,   0,   0, 1,    0.4,    0.9,   2]
             ]
         },
 
         'avr': {
             'SEXS': [
                 ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
-                ['Static Excitation System', 'Synchronous Generator 1',       100,    2.0,    10.0,   0.5,    -3,         3],
-                ['Static Excitation System', 'Synchronous Generator 2',       100,    2.0,    10.0,   0.5,    -3,         3],
-                ['Static Excitation System', 'Synchronous Generator 3',       100,    2.0,    10.0,   0.5,    -3,         3]
+                ['Static Excitation System', 'Synchronous Generator 1',       75,    1,    5,   0.02,    0,         5],
+                ['Static Excitation System', 'Synchronous Generator 2',       75,    1,    5,   0.02,    0,         5],
+                ['Static Excitation System', 'Synchronous Generator 3',       75,    1,    5,   0.02,    0,         5]
             ]
         }
     }
@@ -189,6 +189,12 @@ def load():
                 ['Static Excitation System', 'Synchronous Generator 1', 50, 0.02, 10, 0.02, -1, 5], #T_b = 0?
                 ['Static Excitation System', 'Synchronous Generator 2', 50, 0.02, 10, 0.02, -1, 5],
                 ['Static Excitation System', 'Synchronous Generator 3', 50, 0.02, 10, 0.02, -1, 5]
+
+                ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
+                ['Static Excitation System', 'Synchronous Generator 1',       120,    1,    2,   0.02,    -1,         5],
+                ['Static Excitation System', 'Synchronous Generator 2',       120,    1,    2,   0.02,    -1,         5],
+                ['Static Excitation System', 'Synchronous Generator 3',       120,    1,    2,   0.02,    -1,         5]
+                ['GOV1',     'G1',   0.05,   0,     0,          1,          0.2,    1,      2],
             ],
         }
 } """
