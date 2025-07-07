@@ -826,7 +826,7 @@ class Results:
 
         # Plot each generator's active power separately with labels G1, G2, G3, G4
         generators_p_e = np.array(self.results["Generators_p_e"])  # shape: (timesteps, 4)
-        for i in range(4):
+        for i in range(generators_p_e.shape[1]):
             axs[1, 0].plot(
             self.results['Time'],
             generators_p_e[:, i] * tops_nominal_power_mw,
@@ -1102,6 +1102,14 @@ class Results:
                 else:
                     cleaned_values.append(item)  # Leave other types as-is
             cleaned[key] = cleaned_values
+        """ 
+        cleaned['WT1_LEOGO_GSC_p_e'] = cleaned['WT1_LEOGO_GSC_p_e'][:6000]
+        cleaned['WT1_LEOGO_GSC_q_e'] = cleaned['WT1_LEOGO_GSC_q_e'][:6000]
+        cleaned['WT1_LEOGO_GSC_i_inj'] = cleaned['WT1_LEOGO_GSC_i_inj'][:6000]
+        cleaned['WT1_LEOGO_GSC_p_ref_grid'] = cleaned['WT1_LEOGO_GSC_p_ref_grid'][:6000]
+        cleaned['WT1_LEOGO_GSC_v_ref_grid'] = cleaned['WT1_LEOGO_GSC_v_ref_grid'][:6000]
+        cleaned['WT1_LEOGO_GSC_q_ref_grid'] = cleaned['WT1_LEOGO_GSC_q_ref_grid'][:6000]
+        cleaned['WT1_LEOGO_GSC_bus_voltage'] = cleaned['WT1_LEOGO_GSC_bus_voltage'][:6000] """
 
         # Save to HDF5
         df = pd.DataFrame(cleaned)

@@ -1,4 +1,3 @@
-## Simulation script for DynaWind 
 
 # WindTurbine imports
 import sys
@@ -10,32 +9,44 @@ from dynawind.dynawind_models.results import Results
 import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
+import matplotlib.pyplot as plt
 import importlib
 importlib.reload(dps)
-import matplotlib.pyplot as plt
+import os
 from collections import defaultdict
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 if __name__ == '__main__':
 
-    import tops.ps_models.k2a_highwind as model_data
+    import LEOGO.LEOGO_ps as model_data
     model = model_data.load()
+
+    model['avr']['SEXS'] = model['avr']['SEXS'][:2]  
+    model['generators']['GEN'] = model['generators']['GEN'][:2]  
+    model['generators']['GEN'][1] = ['Synchronous Generator 1', 'Main Bus A', 84, 11, 47.41191685, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
+    
+    """ 
+    model['avr']['SEXS'][1] = ['Static Excitation System', 'Synchronous Generator 1',       80,    2,    5,   0.01,    0,         3]
+    model['gov']['TGOV1'] = model['gov']['TGOV1'][:2]
+    #model['gov']['TGOV1'][1] = ['GOV1',     'Synchronous Generator 1',   0.05,   0.02,   0, 1,    0.1,    5,  10]
+    model['pss']['STAB1'] = model['pss']['STAB1'][:2] """
 
     # Power system model
     ps = dps.PowerSystemModel(model=model)  
 
     # Create Wind Turbine instance
-    WT1 = WindTurbine(name='WT1', index = 0, gsc_control="PV")
+    WT1 = WindTurbine(name='WT1_LEOGO', index = 0, gsc_control="PV")
 
     # Initiate the power system model
     ps.init_dyn_sim()
-    print(max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))        # Checks for unstable initiation
+    print('Largest mismatch at initiation: ', max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))        # Checks for unstable initiation
 
     x_0 = ps.x_0.copy()
 
     ### SIMULATION SETTINGS ###
-    simulation_name = "dynawind_example"
+    simulation_name = "dynawind_leogo"
     t = 0
-    t_end = 30
+    t_end = 120
     step_size_mech = 0.01
     step_size_elec = 5e-6
 
@@ -60,7 +71,7 @@ if __name__ == '__main__':
         sys.stdout.write("\r%d%%" % (t/(t_end)*100))
 
         # Short circuit
-        if t >= sc_time and t <= (sc_time + sc_duration) and sc == True:
+        if t >= sc_time and t <= (sc_time + sc_duration) and sc:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 1e5
         else:
             ps.y_bus_red_mod[sc_bus_idx,sc_bus_idx] = 0
@@ -91,7 +102,6 @@ if __name__ == '__main__':
             results.store_gsc_results_PV(WT1, ps, x, v)
         results.store_generator_results(ps, x, v)
 
-
         res['t'].append(t)
         res['gen_speed'].append(ps.gen['GEN'].speed(x, v).copy())
         res['v'].append(v.copy())
@@ -106,7 +116,8 @@ if __name__ == '__main__':
     # Terminate the FMU
     WT1.fast.terminate_fmu()
 
-    
+
+
     plt.figure()
     plt.plot(res['t'], [abs(v_i) for v_i in res['v']])
     plt.xlabel('Time [s]')
@@ -115,6 +126,7 @@ if __name__ == '__main__':
     plt.legend([buses[0] for buses in model['buses'][1:]])
     plt.ticklabel_format(useOffset=False)
     plt.grid()
+    plt.savefig(f'LEOGO\Plots\wind_1gen_line_v', dpi=300, bbox_inches='tight')
     plt.show()
 
     plt.figure()
@@ -125,6 +137,7 @@ if __name__ == '__main__':
     plt.legend([gens[0] for gens in model['generators']['GEN'][1:]])
     plt.ticklabel_format(useOffset=False)   
     plt.grid()
+    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_p', dpi=300, bbox_inches='tight')
     plt.show()
 
     plt.figure()
@@ -135,8 +148,8 @@ if __name__ == '__main__':
     plt.legend([gens[0] for gens in model['generators']['GEN'][1:]])
     plt.ticklabel_format(useOffset=False)
     plt.grid()
+    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_q', dpi=300, bbox_inches='tight')
     plt.show()
-
     
     plt.figure()
     plt.plot(res['t'], res['gen_speed'])
@@ -145,7 +158,9 @@ if __name__ == '__main__':
     #plt.title(f"Generator speed during short circuit at {model['generators']['GEN'][sc_bus_idx+1][0]} at t={sc_time}s to t={sc_time+sc_duration}s")
     plt.legend([f"Gen {i+1}" for i in range(len(res['gen_speed'][0]))])
     plt.grid()
+    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_speed', dpi=300, bbox_inches='tight')
     plt.show()
+
 
     # Saves the result class to a file, see plotting.py for loading and plotting of the results
     results.save_to_file(simulation_name)

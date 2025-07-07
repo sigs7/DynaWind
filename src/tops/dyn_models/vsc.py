@@ -222,6 +222,14 @@ class GridSideConverter_PV(DAEModel):
         X = self.local_view(x)
         par = self.par
 
+        
+        if not hasattr(self, "_call_count"):
+            self._call_count = 0
+        self._call_count += 1
+
+        if self._call_count == 6000 or self._call_count == 8000 or self._call_count == 10000 or self._call_count == 12000 or self._call_count == 14000 or self._call_count == 16000 or self._call_count == 18000 or self._call_count == 20000 or self._call_count == 22000 or self._call_count == 24000:
+            stop = True 
+
         q_ref_grid = self.par["k_v"]*(self.par["v_ref_grid"] - abs(self.v_t(x,v))) + X['x_v']
         q_ref_grid = np.clip(q_ref_grid, -0.5, 0.5)  # Limit reactive power reference to +/- 0.8 pu, prioritzes active power
 

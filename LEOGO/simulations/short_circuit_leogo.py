@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 import time
 import tops.dynamic as dps
 import tops.solvers as dps_sol
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 if __name__ == '__main__':
 
     # Load model
-    import tops.ps_models.LEOGO as model_data
+    import LEOGO.LEOGO_ps as model_data
     model = model_data.load()
 
     """ model["avr"] = {}

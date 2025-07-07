@@ -7,6 +7,8 @@ import tops.solvers as dps_sol
 import importlib
 importlib.reload(dps)
 import pandas as pd
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 if __name__ == '__main__':
 

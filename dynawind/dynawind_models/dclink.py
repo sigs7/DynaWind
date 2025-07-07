@@ -112,6 +112,15 @@ class DClink():
     # Output from DC-link voltage control to the GSC
     def p_adjust(self):
             # return np.clip(self.x_pref_adj + (self.vdc - self.vdc_ref) * self.params["K_p_dc"], -0.1, 0.1)
+                
+            if not hasattr(self, "_call_count"):
+                self._call_count = 0
+            self._call_count += 1
+
+            if self._call_count == 6000 or self._call_count == 8000 or self._call_count == 10000 or self._call_count == 12000 or self._call_count == 14000 or self._call_count == 16000 or self._call_count == 18000 or self._call_count == 20000 or self._call_count == 22000 or self._call_count == 24000:
+                stop = True 
+                
+            
             if self.chopper_on:
                 self.x_pref_adj = 0.0
             return self.x_pref_adj + (self.vdc - self.vdc_ref) * self.params["K_p_dc"]

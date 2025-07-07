@@ -156,32 +156,58 @@ def load():
         'generators': {
             'GEN': [
                 ['name',                        'bus', 'S_n','V_n','P','V',    'H',    'D',    'X_d',  'X_q',  'X_d_t',    'X_q_t',    'X_d_st',   'X_q_st',   'T_d0_t',   'T_q0_t',   'T_d0_st',  'T_q0_st'],
-                ['Synchronous Generator 1', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
-                ['Synchronous Generator 2', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
-                ['Synchronous Generator 3', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 0, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
+                ['Synchronous Generator 1', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
+                ['Synchronous Generator 2', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
+                ['Synchronous Generator 3', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
             ]
         },
 
         'gov': {'TGOV1': [ ## GAST -> TGOV1
             ['name',    'gen',  'R',    'D_t',  'V_min',    'V_max',    'T_1',  'T_2',  'T_3'],
-            ['GOV1',     'Synchronous Generator 1',   0.05,   0,   0, 1,    0.4,    10,   10],
-            ['GOV2',     'Synchronous Generator 2',   0.05,   0,   0, 1,    0.4,    10,   10],
-            ['GOV3',     'Synchronous Generator 3',   0.05,   0,   0, 1,    0.4,    10,   10]
+            ['GOV1',     'Synchronous Generator 1',   0.05,   0.02,   0, 1,    0.1,    0.09,   0.2],
+            ['GOV2',     'Synchronous Generator 2',   0.05,   0.02,   0, 1,    0.1,    0.09,   0.2],
+            ['GOV3',     'Synchronous Generator 3',   0.05,   0.02,   0, 1,    0.1,    0.09,   0.2]
             ]
         },
 
         'avr': {
             'SEXS': [
                 ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
-                ['Static Excitation System', 'Synchronous Generator 1',       50,    5,    15,   0.1,    0,         3],
-                ['Static Excitation System', 'Synchronous Generator 2',       50,    5,    15,   0.1,    0,         3],
-                ['Static Excitation System', 'Synchronous Generator 3',       50,    5,    15,   0.1,    0,         3]
+                ['Static Excitation System', 'Synchronous Generator 1',       80,    2,    5,   0.01,    0,         3],
+                ['Static Excitation System', 'Synchronous Generator 2',       100,    2,    10,   0.5,    0,         3],
+                ['Static Excitation System', 'Synchronous Generator 3',       100,    2,    10,   0.5,    0,         3]
+            ]
+        },
+        'vsc': {
+            'GridSideConverter_PV': [ 
+                ['name',   'bus',                           'S_n',      "p_ref_grid",      "v_ref_grid",   'k_p',      'k_v',    'T_p',     'T_v',     'k_pll',   'T_pll',    'T_i',      "i_max"],
+                ['WT1_leogo',    'Busbar WTG1 LV',            20,         0.0,               1.05,           5,          20,        0.1,        100,        5,        0.1,         0.01,      1.2]
+            ]
+        },
+        
+        'pss': {
+            'STAB1': [
+                ['name',    'gen',  'K',    'T',    'T_1',  'T_2',  'T_3',  'T_4',  'H_lim'],
+                ['PSS1',    'Synchronous Generator 1',   50,     10.0,   0.5,    0.5,    0.05,   0.05,   0.03],
+                ['PSS2',    'Synchronous Generator 2',   50,     10.0,   0.5,    0.5,    0.05,   0.05,   0.03],
+                ['PSS3',    'Synchronous Generator 3',   50,     10.0,   0.5,    0.5,    0.05,   0.05,   0.03]
             ]
         }
     }
 
 
-""" 'avr': {
+""" 
+'avr': {
+            'SEXS': [
+                ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
+                ['Static Excitation System', 'Synchronous Generator 1',       50,    5,    15,   0.1,    0,         3],
+                ['Static Excitation System', 'Synchronous Generator 2',       50,    5,    15,   0.1,    0,         3],
+                ['Static Excitation System', 'Synchronous Generator 3',       50,    5,    15,   0.1,    0,         3]
+            ]
+        },
+
+
+'avr': {
             'SEXS': [
                 ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
                 ['Static Excitation System', 'Synchronous Generator 3',       100,    2.0,    10.0,   0.5,    -3,         3]
@@ -201,7 +227,18 @@ def load():
             ],
         }
 } """
-
+""" 'vsc': {
+            'GridSideConverter_PV': [ 
+                ['name',   'bus',    'S_n',      "p_ref_grid",      "v_ref_grid",   'k_p',      'k_v',    'T_p',     'T_v',     'k_pll',   'T_pll',    'T_i',      "i_max"],
+                ['WT1_leogo',    'Busbar WTG1 LV',      20,         0.0,               1.05,           5,          10,        0.1,        100,        5,        0.1,         0.01,      1.2],
+            ]
+        }, 
+        'vsc': {
+            'GridSideConverter_PQ': [ 
+                ['name',   'bus',    'S_n',      "p_ref_grid",      "q_ref_grid",   'k_p',      'k_q',    'T_p',     'T_q',     'k_pll',   'T_pll',    'T_i',      "i_max"],
+                ['WT1_leogo',    'Busbar WTG1 LV',      20,         0.0,               0.0,           5,          1,        0.1,        0.1,        5,        0.1,         0.01,      1.2],
+            ]
+        },"""
 """ ['Main Bus A', 11],
             ['Terminal AC High PEC_VSDc_GEX_01', 11],
             ['Terminal AC Low PEC_VSDc_GEX_01', 3.3], 

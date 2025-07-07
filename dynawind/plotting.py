@@ -1,8 +1,10 @@
-from dynawind.dynawind_models.results import Results
-from dynawind.dynawind_models.windturbine import WindTurbine
 import tops.dynamic as dps
 import tops.ps_models.k2a_highwind as model_data
-
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from dynawind.dynawind_models.results import Results
+from dynawind.dynawind_models.windturbine import WindTurbine
 
 # This script is used to plot the results of a wind turbine simulation.
 # Should be run after the simulation has been completed and the results have been saved.
@@ -12,9 +14,9 @@ import tops.ps_models.k2a_highwind as model_data
 
 
 def main():
-    simulation_name = "dynawind_example"       # Name of the simulation file
-    start_time = 5                                  # Start time for plotting
-    stop_time = 30                               # Stop time for plotting
+    simulation_name = "dynawind_leogo"       # Name of the simulation file
+    start_time = 0                                 # Start time for plotting
+    stop_time = 120                               # Stop time for plotting
 
     # Load the results
     results = Results()
@@ -25,19 +27,25 @@ def main():
     ps = dps.PowerSystemModel(model=model)
 
     # Create Wind Turbine instance
-    WT1 = WindTurbine(name='WT1', index=0, gsc_control="PV")
+    WT1 = WindTurbine(name='WT1_LEOGO', index=0, gsc_control="PV")
     WT1.get_converter_rating(ps)
 
 
     # Generate selected plots (comment/uncomment as needed)
-    # results.plot_paper_dclink_3x1(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
+    results.plot_paper_dclink_3x1(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
     results.plot_paper_dclink_2x1(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
-    # results.plot_paper_dclink_2x2(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
+    results.plot_paper_dclink_2x2(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
     results.plot_paper_fmugen(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
     results.plot_paper_gscgrid(sim_name=simulation_name, WT=WT1, ps=ps, start_time=start_time, stop_time=stop_time)
-    # results.plot_paper_hsshfttq_vs_genspdortq(sim_name=simulation_name, WT=WT1, start_time=start_time)
-    # results.plot_yawbrtaxp_and_y(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
-    # results.plot_fmu_overview(sim_name=simulation_name, WT=WT1)
+    results.plot_paper_hsshfttq_vs_genspdortq(sim_name=simulation_name, WT=WT1, start_time=start_time)
+    results.plot_yawbrtaxp_and_y(sim_name=simulation_name, WT=WT1, start_time=start_time, stop_time=stop_time)
+    results.plot_fmu_overview(sim_name=simulation_name, WT=WT1) #start_time=start_time, stop_time=stop_time)
+    results.plot_tops_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
+    results.plot_fmu_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
+    results.plot_pmsm_multirate(sim_name=simulation_name, WT=WT1) # start_time=start_time, stop_time=stop_time)
+    #results.plot_gsc_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
+    #results.plot_dclink_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
+    
 
 if __name__ == "__main__":
     main()
