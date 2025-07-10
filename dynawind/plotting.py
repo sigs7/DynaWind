@@ -44,8 +44,8 @@ def main():
     results.plot_fmu_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
     results.plot_pmsm_multirate(sim_name=simulation_name, WT=WT1) # start_time=start_time, stop_time=stop_time)
     #results.plot_gsc_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
-    #results.plot_dclink_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
-    
+    results.plot_dclink_overview(sim_name=simulation_name, WT=WT1) #, start_time=start_time, stop_time=stop_time)
+    #results.plot_msc_overview(sim_name=simulation_name, WT=WT1) 
 
 if __name__ == "__main__":
     main()
