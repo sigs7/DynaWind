@@ -16,7 +16,7 @@ from dynawind.dynawind_models.windturbine import WindTurbine
 def main():
     simulation_name = "dynawind_leogo"       # Name of the simulation file
     start_time = 0                                 # Start time for plotting
-    stop_time = 120                               # Stop time for plotting
+    stop_time = 60                             # Stop time for plotting
 
     # Load the results
     results = Results()

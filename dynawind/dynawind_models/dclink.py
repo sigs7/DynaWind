@@ -47,7 +47,7 @@ class DClink():
 
         # Integral term for the DC-link voltage control
         dX["x_pref_adj"] = (self.vdc - self.vdc_ref) * (p["K_p_dc"] / p["T_i_dc"])
-
+        #dX["x_pref_adj"] = (self.vdc - self.vdc_ref) + np.clip(self.x_pref_adj, -0.1, 0.1) * (p["K_p_dc"] / p["T_i_dc"]) 
         return dX
 
     # endregion
@@ -100,11 +100,11 @@ class DClink():
         
         self.vdc += dX["vdc"] * step_size
 
-        # Anti-windup for the integral term
+        # Anti-windup for the integral term ## ??
         self.x_pref_adj += dX["x_pref_adj"] * step_size
-
+        varvar = dX["x_pref_adj"] 
         # Add anti-windup limits to the integral term
-        # self.x_pref_adj = np.clip(self.x_pref_adj, -0.2, 0.2)
+        #self.x_pref_adj = np.clip(self.x_pref_adj, -0.1, 0.1)
 
     # endregion
 
@@ -117,13 +117,22 @@ class DClink():
                 self._call_count = 0
             self._call_count += 1
 
-            if self._call_count == 6000 or self._call_count == 8000 or self._call_count == 10000 or self._call_count == 12000 or self._call_count == 14000 or self._call_count == 16000 or self._call_count == 18000 or self._call_count == 20000 or self._call_count == 22000 or self._call_count == 24000:
+            """ if self._call_count == 2500:
+                self.x_pref_adj = 0.0 """
+            if self._call_count == 100 or self._call_count == 1000 or self._call_count == 6000 or self._call_count == 8000 or self._call_count == 10000 or self._call_count == 12000 or self._call_count == 14000 or self._call_count == 16000 or self._call_count == 18000 or self._call_count == 20000 or self._call_count == 22000 or self._call_count == 24000:
                 stop = True 
                 
             
             if self.chopper_on:
                 self.x_pref_adj = 0.0
-            return self.x_pref_adj + (self.vdc - self.vdc_ref) * self.params["K_p_dc"]
+
+            adjusted_output = self.x_pref_adj + (self.vdc - self.vdc_ref) * self.params["K_p_dc"]
+            #not_adjusted_output = (self.vdc - self.vdc_ref) * self.params["K_p_dc"]
+
+            """ if abs(self.vdc - self.vdc_ref) < 0.0001:
+                return not_adjusted_output
+            else: """
+            return adjusted_output
     
 
         # GSC active power reference

@@ -1,4 +1,3 @@
-
 # WindTurbine imports
 import sys
 sys.path.append(r"C:\git\DynaWind-1")
@@ -46,7 +45,7 @@ if __name__ == '__main__':
     ### SIMULATION SETTINGS ###
     simulation_name = "dynawind_leogo"
     t = 0
-    t_end = 120
+    t_end = 60
     step_size_mech = 0.01
     step_size_elec = 5e-6
 
@@ -159,6 +158,37 @@ if __name__ == '__main__':
     plt.legend([f"Gen {i+1}" for i in range(len(res['gen_speed'][0]))])
     plt.grid()
     plt.savefig(f'LEOGO\Plots\wind_1gen_gen_speed', dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+    plot_buses_tops = [
+    'Busbar WTG1 HV',
+    'Busbar WTG1 LV',
+    'Terminal WindPark',
+    'SG Terminal 1',
+    'Main Bus A',
+    'Terminal AC Low Drilling A',
+    'Terminal TRA_UTL690_01',
+    'Terminal AC Low PEC_VSDc_OEX_01',
+    'Utility690 Bus A',
+    'Terminal TRA_UTL400_01',
+    'Utility400 SWBD/BusA'
+]
+
+
+    # Find indices of the buses to plot
+    bus_names = [bus[0] for bus in model['buses'][1:]]
+    plot_bus_indices = [bus_names.index(name) for name in plot_buses_tops if name in bus_names]
+
+    plt.figure()
+    for idx in plot_bus_indices:
+        plt.plot(res['t'], [abs(v_i[idx]) for v_i in res['v']])
+    plt.xlabel('Time [s]')
+    plt.ylabel('Voltage [p.u.]')
+    plt.legend(plot_buses_tops, loc='lower right')
+    plt.ticklabel_format(useOffset=False)
+    plt.grid()
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_line_v_2', dpi=300, bbox_inches='tight')
     plt.show()
 
 

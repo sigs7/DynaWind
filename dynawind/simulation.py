@@ -35,7 +35,7 @@ if __name__ == '__main__':
     ### SIMULATION SETTINGS ###
     simulation_name = "dynawind_example"
     t = 0
-    t_end = 30
+    t_end = 60
     step_size_mech = 0.01
     step_size_elec = 5e-6
 
@@ -111,6 +111,7 @@ if __name__ == '__main__':
     plt.plot(res['t'], [abs(v_i) for v_i in res['v']])
     plt.xlabel('Time [s]')
     plt.ylabel('Voltage [p.u.]')
+    plt.title(f"Voltages at buses k2a_highwind")
     #plt.title(f"Voltages at buses during short circuit at {model['generators']['GEN'][sc_bus_idx+1][0]} at t={sc_time}s to t={sc_time+sc_duration}s")
     plt.legend([buses[0] for buses in model['buses'][1:]])
     plt.ticklabel_format(useOffset=False)

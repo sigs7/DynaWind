@@ -69,7 +69,11 @@ class Results:
         self.results[f"{WT.name}_DC_duty"].append(WT.dclink.duty())
         # self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.msc.p_e_dq() - WT.dclink.gsc_p_ref())
         self.results[f"{WT.name}_MSC_GSC_pe_diff"].append(WT.pmsm.p_e() - WT.calculate_p_gsc(ps, x, v))
+        ##P_WT = WT.pmsm.p_e()
+        ##P_gsc = WT.calculate_p_gsc(ps, x, v)
         self.results[f"{WT.name}_DC_x_pref_adj"].append(WT.dclink.x_pref_adj)
+        ##x_pref_adj = WT.dclink.x_pref_adj
+        ##b = False
     # endregion
 
     # region store PQ

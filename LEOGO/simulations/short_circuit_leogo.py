@@ -34,7 +34,7 @@ if __name__ == '__main__':
     t_0 = time.time()
     trip_time = 2
     clear_time = trip_time + 0.01
-    sc_gen = 0
+    sc_gen = 2
 
     sc_bus_idx = ps.gen['GEN'].bus_idx_red['terminal'][sc_gen]
 

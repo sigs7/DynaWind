@@ -150,6 +150,7 @@ def load():
             ['LCL-Kondensator WIN_03', 'Terminal AC Low PEC_VSDc_WIN_03', 3.3, 0.21, 'Z'],
             ['LCL-Kondensator REC', 'Terminal AC Low PEC_VSDc_REC', 3.3, 0.21, 'Z'],
             ['LCL-Kondensator Drilling A', 'Terminal AC Low Drilling A', 0.69, 0.139, 'Z']
+            #['test', 'Busbar WTG1 LV', 33, 3, 'Z']
 
         ],
 
@@ -181,7 +182,7 @@ def load():
         'vsc': {
             'GridSideConverter_PV': [ 
                 ['name',   'bus',                           'S_n',      "p_ref_grid",      "v_ref_grid",   'k_p',      'k_v',    'T_p',     'T_v',     'k_pll',   'T_pll',    'T_i',      "i_max"],
-                ['WT1_leogo',    'Busbar WTG1 LV',            20,         0.0,               1.05,           5,          20,        0.1,        100,        5,        0.1,         0.01,      1.2]
+                ['WT1_LEOGO',    'Busbar WTG1 LV',            20,         0.0,               1.05,           5,          20,        0.1,        100,        5,        0.1,         0.01,      1.2]
             ]
         },
         
