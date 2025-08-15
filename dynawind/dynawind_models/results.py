@@ -178,7 +178,7 @@ class Results:
         # Set the common xlabel and adjust spacing
         fig.text(0.5, 0.04, 'Time (s)', ha='center')
         plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
-        # plt.savefig(f"Figures/co_sim/PMSM_Overview_{sim_name}.png")
+        # plt.savefig(f"Figures/co_sim/PMSM_Overview_{sim_name}.pdf")
 
         # Set the x-axis limit if t_init is provided
         if t_init is not None:
@@ -189,10 +189,10 @@ class Results:
         plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/PMSM_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\PMSM_Overview_{sim_name}.pdf", format='pdf')
 
 
     def plot_pmsm_overview_interactive(self, sim_name: str, WT: WindTurbine):
@@ -229,12 +229,12 @@ class Results:
         fig.update_layout(title='PMSM Overview', xaxis_title='Time (s)', yaxis_title='Values', legend_title='Legend')
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         
         # Save the figure as an interactive HTML file
-        pio.write_html(fig, file=f"{output_dir}/PMSM_Overview_{sim_name}.html", auto_open=False)
+        pio.write_html(fig, file=f"{output_dir}\\PMSM_Overview_{sim_name}.html", auto_open=False)
         
 
         # Example usage
@@ -308,10 +308,10 @@ class Results:
         plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
         
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/FMU_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\FMU_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion    
         
@@ -374,10 +374,10 @@ class Results:
         plt.tight_layout(rect=[0, 0.05, 1, 1])  # Adjust bottom margin
         
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/MSC_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\MSC_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -439,10 +439,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\DClink_Overview_{sim_name}.pdf", format='pdf')
 
     # region Plot GSC
     def plot_gsc_overview(self, sim_name : str, WT : WindTurbine):
@@ -483,10 +483,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/GSC_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\GSC_Overview_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -555,10 +555,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/TOPS_Overview_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\TOPS_Overview_{sim_name}.pdf", format='pdf')
     # endregion
 
     # region Plot Controllers
@@ -590,10 +590,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/Controllers_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\Controllers_{sim_name}.pdf", format='pdf')
 
 
     def plot_vdc_controller_terms(self, sim_name: str, WT: WindTurbine):
@@ -624,10 +624,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/VDC_Controller_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\VDC_Controller_{sim_name}.pdf", format='pdf')
 
     # endregion
 
@@ -665,10 +665,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/PMSM_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\PMSM_{sim_name}.pdf", format='pdf')
 
 
     # region generator torque
@@ -699,10 +699,10 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/Generator_Torque_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\Generator_Torque_{sim_name}.pdf", format='pdf')
     # endregion
 
     def set_plot_start_time(self, axs, start_time, stop_time=None):
@@ -740,10 +740,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_paper_2x1_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\DClink_paper_2x1_{sim_name}.pdf", format='pdf')
 
     def plot_paper_fmugen(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
@@ -795,10 +795,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/FMUgen_paper_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\FMUgen_paper_{sim_name}.pdf", format='pdf')
 
     def plot_paper_gscgrid(self, sim_name: str, WT: WindTurbine, ps: PowerSystemModel, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
@@ -857,10 +857,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/GSCgrid_paper_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\GSCgrid_paper_{sim_name}.pdf", format='pdf')
 
     def plot_paper_dclink_2x2(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
@@ -906,10 +906,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.05, 1, 1], h_pad=1.0, w_pad=1.2)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_2x2_paper_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\DClink_2x2_paper_{sim_name}.pdf", format='pdf')
 
     def plot_paper_dclink_3x1(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
         import matplotlib.pyplot as plt
@@ -949,10 +949,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/DClink_3x1_paper_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\DClink_3x1_paper_{sim_name}.pdf", format='pdf')
 
 
     def plot_yawbrtaxp_and_y(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
@@ -993,10 +993,10 @@ class Results:
 
         plt.tight_layout(rect=[0, 0.03, 1, 1], h_pad=1.0)
 
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/YawBrTaxp_Tayp_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\YawBrTaxp_Tayp_{sim_name}.pdf", format='pdf')
         
 
     def plot_paper_hsshfttq_vs_genspdortq(self, sim_name: str, WT: WindTurbine, start_time: float = 0.0, stop_time: float = None):
@@ -1033,12 +1033,12 @@ class Results:
         plt.tight_layout()
 
         # Create directory if it does not exist
-        output_dir = f"dynawind/figures/{sim_name}"
+        output_dir = f"dynawind\\figures\\{sim_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         # Save the plot
-        plt.savefig(f"{output_dir}/HSShftTq_vs_GenSpdOrTrq_{sim_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\HSShftTq_vs_GenSpdOrTrq_{sim_name}.pdf", format='pdf')
 
 
 
@@ -1069,10 +1069,10 @@ class Results:
         plt.tight_layout()
 
         # Save
-        output_dir = f"dynawind/figures/{simulation_name}"
+        output_dir = f"dynawind\\figures\\{simulation_name}"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        plt.savefig(f"{output_dir}/Multirate_Torque_{simulation_name}.pdf", format='pdf')
+        plt.savefig(f"{output_dir}\\Multirate_Torque_{simulation_name}.pdf", format='pdf')
         plt.close()
 
 
@@ -1084,7 +1084,7 @@ class Results:
         import numpy as np
 
 
-        output_dir = f"dynawind/figures/{simulation_name}"
+        output_dir = f"dynawind\\figures\\{simulation_name}"
         os.makedirs(output_dir, exist_ok=True)
         filepath = os.path.join(output_dir, "results.h5")
 
@@ -1124,7 +1124,7 @@ class Results:
 
     def load_from_file(self, simulation_name: str):
         """Load results from an HDF5 file under a simulation-specific folder"""
-        filepath = f"dynawind/figures/{simulation_name}/results.h5"
+        filepath = f"dynawind\\figures\\{simulation_name}\\results.h5"
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"No saved results found at {filepath}")
 

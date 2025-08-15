@@ -118,6 +118,7 @@ def load():
             ['name', 'bus', 'P', 'Q', 'model'],
             ['DC Load - VSD_GEX_02', 'Terminal AC Low PEC_VSDc_GEX_02', 9.7, 0, 'Z'],
             ['DC Load - VSD_GEX_03', 'Terminal AC Low PEC_VSDc_GEX_03', 9.7, 0, 'Z'],
+            #['Additional DC Load 1', 'Main Bus A', 15, 0, 'Z'],
             ['DC Load - VSD_OEX_02', 'Terminal AC Low PEC_VSDc_OEX_02', 0.39, 0, 'Z'], 
             ['DC Load - VSD_WIN_03', 'Terminal AC Low PEC_VSDc_WIN_03', 3, 0, 'Z'],
             ['DC Load - VSD_GEX_01', 'Terminal AC Low PEC_VSDc_GEX_01', 9.7, 0, 'Z'],
@@ -156,7 +157,7 @@ def load():
 
         'generators': {
             'GEN': [
-                ['name',                        'bus', 'S_n','V_n','P','V',    'H',    'D',    'X_d',  'X_q',  'X_d_t',    'X_q_t',    'X_d_st',   'X_q_st',   'T_d0_t',   'T_q0_t',   'T_d0_st',  'T_q0_st'],
+                ['name',                        'bus', 'S_n','V_n',     'P',          'V',    'H',  'D',    'X_d',  'X_q',  'X_d_t',    'X_q_t',    'X_d_st',   'X_q_st',   'T_d0_t',   'T_q0_t',   'T_d0_st',  'T_q0_st',   'T_A',   'T_B',   'T_C'],
                 ['Synchronous Generator 1', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
                 ['Synchronous Generator 2', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013],
                 ['Synchronous Generator 3', 'Main Bus A', 28, 11, 15.803972283333332, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
@@ -174,7 +175,7 @@ def load():
         'avr': {
             'SEXS': [
                 ['name',   'gen',      'K',    'T_a',  'T_b',  'T_e',  'E_min',    'E_max'],
-                ['Static Excitation System', 'Synchronous Generator 1',       80,    2,    5,   0.01,    0,         3],
+                ['Static Excitation System', 'Synchronous Generator 1',       100,    2,    10,   0.5,    0,         3],
                 ['Static Excitation System', 'Synchronous Generator 2',       100,    2,    10,   0.5,    0,         3],
                 ['Static Excitation System', 'Synchronous Generator 3',       100,    2,    10,   0.5,    0,         3]
             ]

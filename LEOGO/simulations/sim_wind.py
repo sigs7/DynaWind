@@ -1,6 +1,7 @@
+
 # WindTurbine imports
 import sys
-sys.path.append(r"C:\git\DynaWind-1")
+sys.path.append(r"C:\git\DynaWind-2")
 from dynawind.dynawind_models.windturbine import WindTurbine
 from dynawind.dynawind_models.results import Results
 
@@ -22,11 +23,12 @@ if __name__ == '__main__':
 
     model['avr']['SEXS'] = model['avr']['SEXS'][:2]  
     model['generators']['GEN'] = model['generators']['GEN'][:2]  
-    model['generators']['GEN'][1] = ['Synchronous Generator 1', 'Main Bus A', 84, 11, 47.41191685, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
-    
-    """ 
-    model['avr']['SEXS'][1] = ['Static Excitation System', 'Synchronous Generator 1',       80,    2,    5,   0.01,    0,         3]
+    model['generators']['GEN'][1] = ['Synchronous Generator 1', 'Main Bus A', 84, 11, 60, 1.02, 7.0074, 5, 2.33, 2.1, 0.173, 0.01, 0.159, 0.159, 0.822, 1, 0.03, 0.013]
     model['gov']['TGOV1'] = model['gov']['TGOV1'][:2]
+    model['gov']['TGOV1'][1] = ['GOV1', 'Synchronous Generator 1', 0.03, 0.02, 0, 1, 0.1, 0.09, 0.2]
+    
+    #model['avr']['SEXS'][1] = ['Static Excitation System', 'Synchronous Generator 1',       80,    2,    5,   0.01,    0,         3]
+    """ model['gov']['TGOV1'] = model['gov']['TGOV1'][:2]
     #model['gov']['TGOV1'][1] = ['GOV1',     'Synchronous Generator 1',   0.05,   0.02,   0, 1,    0.1,    5,  10]
     model['pss']['STAB1'] = model['pss']['STAB1'][:2] """
 
@@ -38,8 +40,8 @@ if __name__ == '__main__':
 
     # Initiate the power system model
     ps.init_dyn_sim()
-    print('Largest mismatch at initiation: ', max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0))))        # Checks for unstable initiation
-
+    print('Largest mismatch at initiation: ', max(abs(ps.state_derivatives(0, ps.x_0, ps.v_0)))) # type: ignore       # Checks for unstable initiation
+ 
     x_0 = ps.x_0.copy()
 
     ### SIMULATION SETTINGS ###
@@ -63,7 +65,7 @@ if __name__ == '__main__':
 
     res = defaultdict(list)
     
-    sc_bus_idx = ps.vsc['GridSideConverter_PV'].bus_idx_red['terminal'][0]
+    sc_bus_idx = ps.vsc['GridSideConverter_PV'].bus_idx_red['terminal'][0] # type: ignore
     event_flag1 = True
 
     while t < t_end:
@@ -93,19 +95,23 @@ if __name__ == '__main__':
         results.store_fmu_results(WT1)
         results.store_pmsm_results(WT1)
         results.store_dclink_results(WT1, ps, x, v)
+        results.store_generator_results(ps, x, v)
 
         # Store the results of the GSC
         if WT1.gsc_control == "PQ":
             results.store_gsc_results_PQ(WT1, ps, x, v)
         elif WT1.gsc_control == "PV":
             results.store_gsc_results_PV(WT1, ps, x, v)
-        results.store_generator_results(ps, x, v)
 
         res['t'].append(t)
-        res['gen_speed'].append(ps.gen['GEN'].speed(x, v).copy())
+        res['gen_speed'].append(ps.gen['GEN'].speed(x, v).copy()) # type: ignore
         res['v'].append(v.copy())
-        res['gen_p'].append(ps.gen['GEN'].p_e(x, v).copy())
-        res['gen_q'].append(ps.gen['GEN'].q_e(x, v).copy())
+        res['gen_p'].append(ps.gen['GEN'].p_e(x, v).copy()) # type: ignore
+        res['gen_q'].append(ps.gen['GEN'].q_e(x, v).copy()) # type: ignore
+        res['f_n'].append(ps.f_n) # type: ignore
+        res['load_p'].append(ps.loads['Load'].p(x, v).copy()) # type: ignore
+        res['load_q'].append(ps.loads['Load'].q(x, v).copy()) # type: ignore
+        res['freq'].append(ps.f_n * (1 + ps.gen['GEN'].speed(x, v)[0])) # type: ignore
 
         # Update time
         t += step_size_mech
@@ -125,7 +131,7 @@ if __name__ == '__main__':
     plt.legend([buses[0] for buses in model['buses'][1:]])
     plt.ticklabel_format(useOffset=False)
     plt.grid()
-    plt.savefig(f'LEOGO\Plots\wind_1gen_line_v', dpi=300, bbox_inches='tight')
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_line_v', dpi=300, bbox_inches='tight')
     plt.show()
 
     plt.figure()
@@ -136,7 +142,7 @@ if __name__ == '__main__':
     plt.legend([gens[0] for gens in model['generators']['GEN'][1:]])
     plt.ticklabel_format(useOffset=False)   
     plt.grid()
-    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_p', dpi=300, bbox_inches='tight')
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_gen_p', dpi=300, bbox_inches='tight')
     plt.show()
 
     plt.figure()
@@ -147,7 +153,7 @@ if __name__ == '__main__':
     plt.legend([gens[0] for gens in model['generators']['GEN'][1:]])
     plt.ticklabel_format(useOffset=False)
     plt.grid()
-    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_q', dpi=300, bbox_inches='tight')
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_gen_q', dpi=300, bbox_inches='tight')
     plt.show()
     
     plt.figure()
@@ -157,38 +163,39 @@ if __name__ == '__main__':
     #plt.title(f"Generator speed during short circuit at {model['generators']['GEN'][sc_bus_idx+1][0]} at t={sc_time}s to t={sc_time+sc_duration}s")
     plt.legend([f"Gen {i+1}" for i in range(len(res['gen_speed'][0]))])
     plt.grid()
-    plt.savefig(f'LEOGO\Plots\wind_1gen_gen_speed', dpi=300, bbox_inches='tight')
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_gen_speed', dpi=300, bbox_inches='tight')
     plt.show()
 
-
-    plot_buses_tops = [
-    'Busbar WTG1 HV',
-    'Busbar WTG1 LV',
-    'Terminal WindPark',
-    'SG Terminal 1',
-    'Main Bus A',
-    'Terminal AC Low Drilling A',
-    'Terminal TRA_UTL690_01',
-    'Terminal AC Low PEC_VSDc_OEX_01',
-    'Utility690 Bus A',
-    'Terminal TRA_UTL400_01',
-    'Utility400 SWBD/BusA'
-]
-
-
-    # Find indices of the buses to plot
-    bus_names = [bus[0] for bus in model['buses'][1:]]
-    plot_bus_indices = [bus_names.index(name) for name in plot_buses_tops if name in bus_names]
+    plt.figure()
+    plt.plot(res['t'], res['f_n'])
+    plt.xlabel('Time [s]')
+    plt.ylabel('Frequency [Hz]')
+    plt.grid()
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_f_n', dpi=300, bbox_inches='tight')
+    plt.show()
 
     plt.figure()
-    for idx in plot_bus_indices:
-        plt.plot(res['t'], [abs(v_i[idx]) for v_i in res['v']])
+    plt.plot(res['t'], res['load_p'])
     plt.xlabel('Time [s]')
-    plt.ylabel('Voltage [p.u.]')
-    plt.legend(plot_buses_tops, loc='lower right')
-    plt.ticklabel_format(useOffset=False)
+    plt.ylabel('Active power [p.u.]')
+    # Sum across all loads for each time step
+    load_p_sum = [sum(lp) for lp in res['load_p']]
+    plt.plot(res['t'], load_p_sum, label='Sum of all loads')
+    plt.legend([loads[0] for loads in model['loads'][1:]] + ['Sum of all loads'])
     plt.grid()
-    plt.savefig(f'LEOGO\\Plots\\wind_1gen_line_v_2', dpi=300, bbox_inches='tight')
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_load_p', dpi=300, bbox_inches='tight')
+    plt.show()
+
+    plt.figure()
+    plt.plot(res['t'], res['load_q'])
+    plt.xlabel('Time [s]')
+    plt.ylabel('Reactive power [p.u.]')
+    # Sum across all loads for each time step
+    load_q_sum = [sum(lq) for lq in res['load_q']]
+    plt.plot(res['t'], load_q_sum, label='Sum of all loads')
+    plt.legend([loads[0] for loads in model['loads'][1:]] + ['Sum of all loads']) 
+    plt.grid()
+    plt.savefig(f'LEOGO\\Plots\\wind_1gen_load_q', dpi=300, bbox_inches='tight') 
     plt.show()
 
 

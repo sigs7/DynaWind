@@ -64,8 +64,8 @@ class WindTurbine(FAST, PMSM, DClink):
                 "vdc_ref"            : 1.5,
                 "chopper_threshold"  : 1.55,
                 "Cdc"                : 5e-3,  #0.6, # 1.2, #0.45, #1.2,   #0.1,      0.45,             # Zbase = (sqrt(3)*4770.34)**2 / 15e6 = 4.55      Cbase = 1 / 2pi*f_n*Zbase = 0.00275      Cdc = 0.01 F / 0.0082 = 1.2 
-                "K_p_dc"             : 2,
-                "T_i_dc"             : 0.2,
+                "K_p_dc"             : 2,  
+                "T_i_dc"             : 0.2, #0.2,
                 "chopper_resistance" : 2, #2,
             }
 
